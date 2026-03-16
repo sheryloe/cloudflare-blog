@@ -2,14 +2,12 @@
   "name": "donggeuri-cloudflare-blog",
   "private": true,
   "version": "0.1.0",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.8.1",
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "dev:api": "npm run dev --workspace @donggeuri/api",
-    "dev:web": "npm run dev --workspace @donggeuri/web",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "build": "corepack pnpm -r --if-present run build",
+    "dev:admin": "corepack pnpm --filter @donggeuri/admin dev",
+    "dev:api": "corepack pnpm --filter @donggeuri/api dev",
+    "dev:web": "corepack pnpm --filter @donggeuri/web dev",
+    "typecheck": "corepack pnpm -r --if-present run typecheck"
   }
 }

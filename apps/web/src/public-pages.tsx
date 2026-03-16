@@ -19,11 +19,13 @@ import { getCategoryFeed, getPost, getTagFeed, listCategories, listPosts } from 
 import { cn } from "./lib/utils";
 import { ErrorMessage, formatDate } from "./ui";
 
+const ADMIN_APP_URL = import.meta.env.VITE_ADMIN_APP_URL?.replace(/\/$/, "") ?? "http://localhost:5174";
+
 const publicLinks = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/search", label: "Search" },
-  { href: "/login", label: "Admin" },
+  { href: `${ADMIN_APP_URL}/login`, label: "Admin", external: true },
 ];
 
 function statusVariant(status: PostSummary["status"]) {
@@ -133,15 +135,15 @@ function PublicNav() {
   return (
     <>
       <nav className="hidden items-center gap-2 rounded-full border border-black/5 bg-white/65 p-2 shadow-sm md:flex">
-        {publicLinks.map((item) => (
-          <Link
-            key={item.href}
-            to={item.href}
-            className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-soft-ink)] hover:bg-black/5 hover:text-[var(--color-ink)]"
-          >
-            {item.label}
-          </Link>
-        ))}
+            {publicLinks.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-soft-ink)] hover:bg-black/5 hover:text-[var(--color-ink)]"
+              >
+                {item.label}
+              </a>
+            ))}
       </nav>
       <Sheet>
         <SheetTrigger asChild>
@@ -157,13 +159,13 @@ function PublicNav() {
           </SheetHeader>
           <div className="mt-6 grid gap-3">
             {publicLinks.map((item) => (
-              <Link
+              <a
                 key={item.href}
-                to={item.href}
+                href={item.href}
                 className="rounded-2xl bg-[var(--color-paper-muted)] px-4 py-3 text-sm font-medium text-[var(--color-ink)]"
               >
                 {item.label}
-              </Link>
+              </a>
             ))}
           </div>
         </SheetContent>

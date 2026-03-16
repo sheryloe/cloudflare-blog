@@ -8,6 +8,8 @@ import { Input } from "./components/ui/input";
 import { useAuth } from "./auth";
 import { Button, ErrorMessage, ShellCard } from "./ui";
 
+const PUBLIC_APP_URL = import.meta.env.VITE_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "http://localhost:5173";
+
 export function AdminLayout() {
   const auth = useAuth();
   const navigate = useNavigate();
@@ -55,9 +57,9 @@ export function AdminLayout() {
                 <Tags className="h-4 w-4" />
                 Tags
               </Link>
-              <Link to="/" className="inline-flex items-center gap-2 rounded-full bg-[rgba(247,241,231,0.16)] px-4 py-2 text-sm font-medium hover:bg-[rgba(247,241,231,0.22)]">
+              <a href={PUBLIC_APP_URL} className="inline-flex items-center gap-2 rounded-full bg-[rgba(247,241,231,0.16)] px-4 py-2 text-sm font-medium hover:bg-[rgba(247,241,231,0.22)]">
                 Public site
-              </Link>
+              </a>
             </nav>
             <Button variant="soft" onClick={() => void handleLogout()} className="bg-white/15 text-white hover:bg-white/22">
               <LogOut className="h-4 w-4" />
@@ -131,9 +133,9 @@ export function LoginPage() {
               <Button type="submit" disabled={submitting} className="min-w-32">
                 {submitting ? "Signing in..." : "Login"}
               </Button>
-              <Link className="text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-ink)]" to="/">
+              <a className="text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-ink)]" href={PUBLIC_APP_URL}>
                 Back to public site
-              </Link>
+              </a>
             </div>
           </form>
         </ShellCard>

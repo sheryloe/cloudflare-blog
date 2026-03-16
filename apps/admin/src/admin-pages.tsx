@@ -36,6 +36,8 @@ import {
 } from "./lib/api";
 import { ErrorMessage, LoadingPanel, ShellCard, formatDate, toDateInputValue, toIsoValue } from "./ui";
 
+const PUBLIC_APP_URL = import.meta.env.VITE_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "http://localhost:5173";
+
 type PostFormState = {
   title: string;
   subtitle: string;
@@ -246,7 +248,9 @@ export function PostsPage() {
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link to={`/post/${post.slug}`}>Preview</Link>
+                    <a href={`${PUBLIC_APP_URL}/post/${post.slug}`} target="_blank" rel="noreferrer">
+                      Preview
+                    </a>
                   </Button>
                   <Button variant="ghost" onClick={() => void handleDelete(post.id)}>
                     <Trash2 className="h-4 w-4" />
