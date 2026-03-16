@@ -39,6 +39,7 @@ export interface PostSummary {
   subtitle?: string | null;
   excerpt?: string | null;
   coverImage?: string | null;
+  category?: Category | null;
   status: PostStatus;
   publishedAt?: string | null;
   createdAt: string;

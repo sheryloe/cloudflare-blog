@@ -6,7 +6,7 @@ workers_dev = true
 [[d1_databases]]
 binding = "DB"
 database_name = "donggeuri-blog"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "705e0849-4e97-43a6-ba77-1c76f0dde46d"
 
 [[r2_buckets]]
 binding = "ASSETS"
@@ -14,9 +14,6 @@ bucket_name = "donggeuri-assets"
 preview_bucket_name = "donggeuri-assets-preview"
 
 [vars]
-PUBLIC_APP_ORIGIN = ""
-ADMIN_APP_ORIGIN = ""
-R2_PUBLIC_BASE_URL = ""
-ADMIN_EMAIL = ""
-ADMIN_PASSWORD_HASH = ""
-JWT_SECRET = ""
+PUBLIC_APP_ORIGIN = "https://donggeuri-blog.pages.dev"
+ADMIN_APP_ORIGIN = "https://donggeuri-admin.pages.dev"
+R2_PUBLIC_BASE_URL = "https://pub-7929108accc04c1cb90802b6225ae50e.r2.dev"

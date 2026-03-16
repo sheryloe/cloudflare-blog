@@ -1,307 +1,225 @@
 import type { Category, CategoryFeed, Post, PostSummary, TagFeed } from "@donggeuri/shared";
-import { Menu, MoveRight } from "lucide-react";
+import { ArrowUpRight, MoveRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, Outlet, useParams } from "react-router-dom";
+import { Link, Outlet, useLocation, useParams } from "react-router-dom";
 
-import { MarkdownContent } from "./components/markdown-content";
-import { Badge } from "./components/ui/badge";
+import { extractTocHeadings, MarkdownContent } from "./components/markdown-content";
 import { Button } from "./components/ui/button";
-import { Card, CardContent } from "./components/ui/card";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "./components/ui/sheet";
 import { getCategoryFeed, getPost, getTagFeed, listCategories, listPosts } from "./lib/api";
 import { cn } from "./lib/utils";
-import { ErrorMessage, formatDate } from "./ui";
+import { ErrorMessage } from "./ui";
 
 const ADMIN_APP_URL = import.meta.env.VITE_ADMIN_APP_URL?.replace(/\/$/, "") ?? "http://localhost:5174";
 
 const publicLinks = [
-  { href: "/", label: "Home", external: false },
-  { href: "/about", label: "About", external: false },
-  { href: "/search", label: "Search", external: false },
-  { href: `${ADMIN_APP_URL}/login`, label: "Admin", external: true },
+  { href: "/", label: "홈", external: false },
+  { href: "/about", label: "소개", external: false },
+  { href: "/search", label: "검색", external: false },
+  { href: `${ADMIN_APP_URL}/login`, label: "관리자", external: true },
 ];
 
-function statusVariant(status: PostSummary["status"]) {
-  if (status === "published") {
-    return "published";
+const pageDateFormatter = new Intl.DateTimeFormat("ko-KR", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+function formatDate(value?: string | null) {
+  if (!value) {
+    return "날짜 미정";
   }
-  if (status === "draft") {
-    return "draft";
+
+  return pageDateFormatter.format(new Date(value));
+}
+
+function estimateReadMinutes(content: string) {
+  const words = content
+    .replace(/[#>*_`~[\]()!-]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+  return Math.max(1, Math.ceil(words / 220));
+}
+
+function parseYoutubeVideo(value?: string | null) {
+  if (!value) {
+    return null;
   }
-  return "archived";
-}
 
-function MetaPill(props: { label: string; value: string }) {
-  return (
-    <div className="story-chip">
-      <span>{props.label}</span>
-      <strong>{props.value}</strong>
-    </div>
-  );
-}
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.replace(/^www\./, "");
+    let id = "";
 
-function SectionIntro(props: { kicker: string; title: string; description: string }) {
-  return (
-    <div className="section-heading">
-      <p className="section-kicker">{props.kicker}</p>
-      <h2>{props.title}</h2>
-      <p className="max-w-3xl text-sm leading-7 text-[var(--color-soft-ink)] sm:text-base">{props.description}</p>
-    </div>
-  );
-}
+    if (hostname === "youtu.be") {
+      id = url.pathname.slice(1);
+    } else if (hostname === "youtube.com" || hostname === "m.youtube.com") {
+      if (url.pathname === "/watch") {
+        id = url.searchParams.get("v") ?? "";
+      } else if (url.pathname.startsWith("/embed/")) {
+        id = url.pathname.split("/").at(-1) ?? "";
+      } else if (url.pathname.startsWith("/shorts/")) {
+        id = url.pathname.split("/").at(-1) ?? "";
+      }
+    }
 
-function PostMeta(props: { post: Pick<PostSummary, "status" | "publishedAt" | "updatedAt">; compact?: boolean }) {
-  return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center gap-3 text-sm text-[var(--color-soft-ink)]",
-        props.compact && "gap-2 text-xs",
-      )}
-    >
-      <Badge variant={statusVariant(props.post.status)}>{props.post.status}</Badge>
-      <span>{formatDate(props.post.publishedAt ?? props.post.updatedAt)}</span>
-    </div>
-  );
+    return id ? id : null;
+  } catch {
+    return null;
+  }
 }
 
 function NavigationLink(props: { href: string; label: string; external?: boolean }) {
+  const location = useLocation();
+  const isActive =
+    !props.external && (props.href === "/" ? location.pathname === "/" : location.pathname.startsWith(props.href));
+
   if (props.external) {
     return (
-      <a
-        href={props.href}
-        className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-soft-ink)] hover:bg-black/5 hover:text-[var(--color-ink)]"
-      >
+      <a href={props.href} className="simple-nav-link">
         {props.label}
+        <ArrowUpRight className="h-3.5 w-3.5" />
       </a>
     );
   }
 
   return (
-    <Link
-      to={props.href}
-      className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-soft-ink)] hover:bg-black/5 hover:text-[var(--color-ink)]"
-    >
+    <Link to={props.href} className={cn("simple-nav-link", isActive && "simple-nav-link-active")}>
       {props.label}
     </Link>
   );
 }
 
-function PublicNav() {
-  return (
-    <>
-      <nav className="hidden items-center gap-2 rounded-full border border-white/70 bg-white/72 p-2 shadow-[0_16px_48px_rgba(24,32,43,0.08)] md:flex">
-        {publicLinks.map((item) => (
-          <NavigationLink key={item.href} href={item.href} label={item.label} external={item.external} />
-        ))}
-      </nav>
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="border-white/80 bg-white/80 shadow-sm md:hidden">
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent className="border-black/5 bg-[rgba(252,248,241,0.97)]">
-          <SheetHeader>
-            <SheetTitle>Donggeuri Blog</SheetTitle>
-            <SheetDescription>Navigate the public site and jump into the admin workspace.</SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 grid gap-3">
-            {publicLinks.map((item) =>
-              item.external ? (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-[22px] border border-black/6 bg-white px-4 py-3 text-sm font-medium text-[var(--color-ink)] shadow-sm"
-                >
-                  {item.label}
-                </a>
-              ) : (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className="rounded-[22px] border border-black/6 bg-white px-4 py-3 text-sm font-medium text-[var(--color-ink)] shadow-sm"
-                >
-                  {item.label}
-                </Link>
-              ),
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
-  );
+function CategoryChip(props: { category?: Category | null; fallback?: string }) {
+  return <span className="simple-chip">{props.category?.name ?? props.fallback ?? "미분류"}</span>;
 }
 
-function EditorialPostCard(props: { post: PostSummary; featured?: boolean }) {
+function PostListItem(props: { post: PostSummary }) {
   return (
-    <Card
-      className={cn(
-        "surface-outline overflow-hidden",
-        props.featured
-          ? "grid gap-0 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
-          : "h-full transition duration-300 hover:-translate-y-1 hover:shadow-[0_32px_110px_rgba(24,32,43,0.12)]",
-      )}
-    >
+    <article className="post-row">
+      <div className="post-row__body">
+        <div className="post-row__meta">
+          <CategoryChip category={props.post.category} />
+          <span>{formatDate(props.post.publishedAt ?? props.post.updatedAt)}</span>
+        </div>
+        <Link to={`/post/${props.post.slug}`} className="post-row__title">
+          {props.post.title}
+        </Link>
+        <p className="post-row__summary">{props.post.excerpt || props.post.subtitle || props.post.slug}</p>
+        <Link to={`/post/${props.post.slug}`} className="simple-inline-link">
+          자세히 보기
+          <MoveRight className="h-4 w-4" />
+        </Link>
+      </div>
       {props.post.coverImage ? (
-        <div className={cn("relative overflow-hidden", props.featured ? "min-h-[340px] xl:min-h-full" : "aspect-[16/11]")}>
-          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
-          <img
-            src={props.post.coverImage}
-            alt={props.post.title}
-            className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.03]"
-          />
-        </div>
+        <Link to={`/post/${props.post.slug}`} className="post-row__thumb">
+          <img src={props.post.coverImage} alt={props.post.title} />
+        </Link>
       ) : null}
-      <CardContent
-        className={cn(
-          "flex flex-col gap-5 p-6 sm:p-7",
-          props.featured && "justify-center p-8 sm:p-10 lg:p-12",
-        )}
-      >
-        <div className="flex flex-wrap gap-2">
-          <span className="story-chip">
-            <span className="section-kicker !tracking-[0.26em]">
-              {props.featured ? "Lead story" : "Notebook entry"}
-            </span>
-          </span>
-          <MetaPill
-            label="Published"
-            value={new Date(props.post.publishedAt ?? props.post.updatedAt).toLocaleDateString()}
-          />
-        </div>
-        <div className="space-y-3">
-          <Link
-            to={`/post/${props.post.slug}`}
-            className={cn(
-              "block text-balance font-semibold tracking-tight text-[var(--color-ink)] transition-colors hover:text-[var(--color-accent)]",
-              props.featured ? "text-4xl leading-tight sm:text-5xl xl:text-6xl" : "text-[1.8rem] leading-tight",
-            )}
-          >
-            {props.post.title}
-          </Link>
-          {props.post.subtitle || props.post.excerpt ? (
-            <p className="max-w-2xl text-base leading-7 text-[var(--color-soft-ink)]">
-              {props.post.excerpt || props.post.subtitle}
-            </p>
-          ) : null}
-        </div>
-        <PostMeta post={props.post} />
-        <div className="flex flex-wrap items-center gap-3">
-          <Button asChild variant={props.featured ? "default" : "soft"} className="rounded-full px-5">
-            <Link to={`/post/${props.post.slug}`}>
-              Read article
-              <MoveRight className="h-4 w-4" />
-            </Link>
-          </Button>
-          <span className="text-sm text-[var(--color-soft-ink)]">Built for long-form reading across desktop and mobile.</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ArchiveList(props: { posts: PostSummary[]; emptyMessage: string }) {
-  if (!props.posts.length) {
-    return (
-      <div className="surface-outline px-5 py-10 text-center text-[var(--color-soft-ink)]">{props.emptyMessage}</div>
-    );
-  }
-
-  return (
-    <div className="grid gap-4">
-      {props.posts.map((post, index) => (
-        <Card
-          key={post.id}
-          className="surface-outline overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_100px_rgba(24,32,43,0.11)]"
-        >
-          <CardContent className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
-            <div className="hidden lg:flex">
-              <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,rgba(190,93,55,0.12),rgba(63,111,139,0.12))] text-lg font-semibold text-[var(--color-accent)]">
-                {(index + 1).toString().padStart(2, "0")}
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <Badge variant={statusVariant(post.status)}>{post.status}</Badge>
-                <span className="story-chip py-1 text-[11px]">{post.slug}</span>
-              </div>
-              <Link
-                to={`/post/${post.slug}`}
-                className="text-2xl font-semibold tracking-tight text-[var(--color-ink)] transition-colors hover:text-[var(--color-accent)]"
-              >
-                {post.title}
-              </Link>
-              {post.excerpt || post.subtitle ? (
-                <p className="max-w-3xl text-sm leading-7 text-[var(--color-soft-ink)]">
-                  {post.excerpt || post.subtitle}
-                </p>
-              ) : null}
-            </div>
-            <div className="flex flex-col items-start gap-3 lg:items-end">
-              <PostMeta post={post} compact />
-              <Button asChild variant="ghost" size="sm" className="rounded-full">
-                <Link to={`/post/${post.slug}`}>Open story</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    </article>
   );
 }
 
 function Sidebar(props: { categories: Category[] }) {
   return (
-    <aside className="space-y-6 xl:sticky xl:top-6">
-      <Card className="surface-outline overflow-hidden">
-        <CardContent className="space-y-5 p-6">
-          <div className="space-y-2">
-            <p className="section-kicker">Reading room</p>
-            <h3 className="text-2xl font-semibold tracking-tight">Category shelves</h3>
-            <p className="text-sm leading-7 text-[var(--color-soft-ink)]">
-              Move through the archive like a quiet magazine rack instead of a utility sidebar.
-            </p>
-          </div>
-          <div className="grid gap-3">
-            {props.categories.slice(0, 6).map((category) => (
-              <Link
-                key={category.id}
-                to={`/category/${category.slug}`}
-                className="rounded-[22px] border border-black/6 bg-white/70 px-4 py-3 text-sm font-medium text-[var(--color-ink)] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                {category.name}
+    <aside className="simple-sidebar">
+      <section className="sidebar-box">
+        <p className="sidebar-box__eyebrow">Donggeuri</p>
+        <h2 className="sidebar-box__title">읽기 편한 구조에 집중한 블로그</h2>
+        <p className="sidebar-box__text">
+          장식을 줄이고, 글 제목과 요약, 카테고리, 발행일이 또렷하게 보이도록 정리했습니다. 글 작성은 관리자 화면에서
+          진행할 수 있습니다.
+        </p>
+        <a href={`${ADMIN_APP_URL}/login`} className="simple-inline-link">
+          관리자 로그인
+          <ArrowUpRight className="h-4 w-4" />
+        </a>
+      </section>
+
+      <section className="sidebar-box">
+        <p className="sidebar-box__eyebrow">카테고리</p>
+        {props.categories.length ? (
+          <div className="sidebar-link-list">
+            {props.categories.map((category) => (
+              <Link key={category.id} to={`/category/${category.slug}`} className="sidebar-link-row">
+                <span>{category.name}</span>
+                <MoveRight className="h-4 w-4" />
               </Link>
             ))}
-            {props.categories.length === 0 ? (
-              <p className="rounded-[22px] bg-[var(--color-paper-muted)] px-4 py-4 text-sm text-[var(--color-soft-ink)]">
-                Categories will appear here once published posts are organized.
-              </p>
-            ) : null}
           </div>
-        </CardContent>
-      </Card>
+        ) : (
+          <p className="sidebar-box__text">카테고리가 아직 없습니다.</p>
+        )}
+      </section>
 
-      <Card className="surface-outline overflow-hidden">
-        <CardContent className="space-y-5 p-6">
-          <p className="section-kicker">Stack</p>
-          <div className="flex flex-wrap gap-2">
-            <MetaPill label="Pages" value="Web" />
-            <MetaPill label="Workers" value="API" />
-            <MetaPill label="Storage" value="D1 + R2" />
-          </div>
-          <p className="text-sm leading-7 text-[var(--color-soft-ink)]">
-            A Cloudflare-only setup shaped into a publishing surface rather than a default dashboard skin.
-          </p>
-        </CardContent>
-      </Card>
+      <section className="sidebar-box">
+        <p className="sidebar-box__eyebrow">운영 메모</p>
+        <p className="sidebar-box__text">
+          글 상세에서는 긴 글을 위한 목차를 유지하고, 홈은 티스토리나 워드프레스처럼 차분한 리스트 중심으로 정리했습니다.
+        </p>
+      </section>
+    </aside>
+  );
+}
+
+function ArchiveHeader(props: { eyebrow: string; title: string; description: string }) {
+  return (
+    <header className="archive-header">
+      <p className="archive-header__eyebrow">{props.eyebrow}</p>
+      <h1 className="archive-header__title">{props.title}</h1>
+      <p className="archive-header__description">{props.description}</p>
+    </header>
+  );
+}
+
+function VideoEmbed(props: { title: string; youtubeUrl: string }) {
+  const videoId = parseYoutubeVideo(props.youtubeUrl);
+
+  if (!videoId) {
+    return null;
+  }
+
+  return (
+    <section className="video-box">
+      <p className="sidebar-box__eyebrow">관련 영상</p>
+      <div className="video-box__frame">
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}`}
+          title={`${props.title} video`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+    </section>
+  );
+}
+
+function TableOfContents(props: { content: string; activeHeading: string }) {
+  const headings = useMemo(() => extractTocHeadings(props.content), [props.content]);
+
+  if (!headings.length) {
+    return null;
+  }
+
+  return (
+    <aside className="article-toc">
+      <p className="sidebar-box__eyebrow">목차</p>
+      <nav className="article-toc__list">
+        {headings.map((heading) => (
+          <a
+            key={heading.id}
+            href={`#${heading.id}`}
+            className={cn(
+              "article-toc__link",
+              heading.level === 3 && "article-toc__link-sub",
+              props.activeHeading === heading.id && "article-toc__link-active",
+            )}
+          >
+            {heading.text}
+          </a>
+        ))}
+      </nav>
     </aside>
   );
 }
@@ -314,63 +232,23 @@ export function PublicLayout() {
   }, []);
 
   return (
-    <div className="app-shell">
-      <header className="mb-8 space-y-5">
-        <div className="flex items-center justify-between gap-4">
-          <div className="story-chip border-white/80 bg-white/78 shadow-sm">
-            <span className="section-kicker !tracking-[0.28em]">Donggeuri Editorial</span>
-          </div>
-          <PublicNav />
+    <div className="simple-shell">
+      <header className="simple-header">
+        <div className="simple-header__brand">
+          <Link to="/" className="simple-brand">
+            Donggeuri
+          </Link>
+          <p className="simple-brand__description">읽기 편한 구조, 차분한 목록, 긴 글에도 버티는 가독성.</p>
         </div>
-
-        <div className="surface-outline overflow-hidden px-5 py-6 sm:px-7 sm:py-8 lg:px-10 lg:py-10">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] lg:items-end">
-            <div className="space-y-5">
-              <p className="section-kicker">Cloudflare-only publishing system</p>
-              <div className="space-y-4">
-                <h1 className="max-w-4xl text-4xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-5xl xl:text-[4.5rem] xl:leading-none">
-                  Stories, notes, and experiments arranged like a small digital magazine.
-                </h1>
-                <p className="max-w-2xl text-base leading-8 text-[var(--color-soft-ink)] sm:text-lg">
-                  Donggeuri combines Pages, Workers, D1, and R2 into a blog that feels deliberate on mobile and spacious on desktop.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <MetaPill label="Categories" value={String(categories.length)} />
-                <MetaPill label="Theme" value="Editorial" />
-                <MetaPill label="Mobile" value="Optimized" />
-              </div>
-            </div>
-
-            <div className="grid gap-4">
-              <div className="rounded-[30px] border border-black/6 bg-[linear-gradient(135deg,rgba(24,32,43,0.96),rgba(40,67,92,0.92))] p-6 text-white shadow-[0_24px_90px_rgba(24,32,43,0.28)]">
-                <p className="section-kicker !text-[rgba(255,234,214,0.82)]">Design direction</p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-tight">Reading first, chrome second.</h2>
-                <p className="mt-3 text-sm leading-7 text-[rgba(244,240,234,0.76)]">
-                  The public surface leans into typography, layered cards, and quiet motion instead of flat boilerplate layouts.
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                <div className="rounded-[24px] border border-black/6 bg-white/72 p-4 shadow-sm">
-                  <p className="section-kicker">Surface</p>
-                  <p className="mt-2 text-lg font-semibold tracking-tight">Responsive cards</p>
-                </div>
-                <div className="rounded-[24px] border border-black/6 bg-white/72 p-4 shadow-sm">
-                  <p className="section-kicker">Content</p>
-                  <p className="mt-2 text-lg font-semibold tracking-tight">Markdown article flow</p>
-                </div>
-                <div className="rounded-[24px] border border-black/6 bg-white/72 p-4 shadow-sm">
-                  <p className="section-kicker">Admin</p>
-                  <p className="mt-2 text-lg font-semibold tracking-tight">Separate ops app</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <nav className="simple-nav">
+          {publicLinks.map((item) => (
+            <NavigationLink key={item.href} href={item.href} label={item.label} external={item.external} />
+          ))}
+        </nav>
       </header>
 
-      <main className="editorial-grid">
-        <div className="space-y-8">
+      <main className="simple-grid">
+        <div className="simple-main">
           <Outlet />
         </div>
         <Sidebar categories={categories} />
@@ -393,69 +271,61 @@ export function HomePage() {
   }, []);
 
   const [featured, ...rest] = posts;
-  const leadStories = rest.slice(0, 2);
-  const archiveStories = rest.slice(2);
 
   return (
-    <div className="space-y-8">
+    <div className="simple-page">
       <ErrorMessage message={error} />
 
-      {posts.length ? (
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="surface-outline p-4">
-            <p className="section-kicker">Live posts</p>
-            <div className="mt-3 text-3xl font-semibold tracking-tight">{posts.length}</div>
-          </div>
-          <div className="surface-outline p-4">
-            <p className="section-kicker">Lead stories</p>
-            <div className="mt-3 text-3xl font-semibold tracking-tight">{Math.min(leadStories.length + Number(Boolean(featured)), 3)}</div>
-          </div>
-          <div className="surface-outline p-4">
-            <p className="section-kicker">Archive shelf</p>
-            <div className="mt-3 text-3xl font-semibold tracking-tight">{archiveStories.length}</div>
-          </div>
-        </div>
-      ) : null}
+      <ArchiveHeader
+        eyebrow="블로그"
+        title="과한 장식 대신 글이 먼저 보이는 구조"
+        description="최신 글을 상단에 두고, 나머지는 읽기 쉬운 리스트로 정리했습니다. 카테고리와 발행일만 또렷하게 보이도록 단순화했습니다."
+      />
 
       {featured ? (
-        <section className="space-y-4">
-          <SectionIntro
-            kicker="Featured"
-            title="A lead story that anchors the issue"
-            description="The first published article takes the large-format position to make the homepage feel curated rather than auto-generated."
-          />
-          <EditorialPostCard post={featured} featured />
-        </section>
+        <article className="featured-post">
+          <div className="featured-post__body">
+            <div className="post-row__meta">
+              <CategoryChip category={featured.category} fallback="최신 글" />
+              <span>{formatDate(featured.publishedAt ?? featured.updatedAt)}</span>
+            </div>
+            <Link to={`/post/${featured.slug}`} className="featured-post__title">
+              {featured.title}
+            </Link>
+            <p className="featured-post__summary">
+              {featured.excerpt || featured.subtitle || "가장 최근에 발행된 글을 상단에서 바로 읽을 수 있도록 배치했습니다."}
+            </p>
+            <Button asChild className="simple-primary-button">
+              <Link to={`/post/${featured.slug}`}>
+                글 읽기
+                <MoveRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+          {featured.coverImage ? (
+            <Link to={`/post/${featured.slug}`} className="featured-post__media">
+              <img src={featured.coverImage} alt={featured.title} />
+            </Link>
+          ) : null}
+        </article>
       ) : (
-        <Card className="surface-outline overflow-hidden">
-          <CardContent className="p-8 text-center text-[var(--color-soft-ink)]">
-            Your first published post will become the lead story here.
-          </CardContent>
-        </Card>
+        <div className="empty-box">아직 공개된 글이 없습니다. 관리자에서 첫 글을 작성하면 이곳에 표시됩니다.</div>
       )}
 
-      {leadStories.length ? (
-        <section className="space-y-4">
-          <SectionIntro
-            kicker="Highlights"
-            title="Secondary stories with equal visual weight"
-            description="These cards keep the front page feeling alive without collapsing into a generic list."
-          />
-          <div className="grid gap-6 xl:grid-cols-2">
-            {leadStories.map((post) => (
-              <EditorialPostCard key={post.id} post={post} />
+      <section className="list-section">
+        <div className="list-section__header">
+          <h2>전체 글</h2>
+          <p>최신 순으로 정렬된 글 목록입니다.</p>
+        </div>
+        {rest.length ? (
+          <div className="post-list">
+            {rest.map((post) => (
+              <PostListItem key={post.id} post={post} />
             ))}
           </div>
-        </section>
-      ) : null}
-
-      <section className="space-y-4">
-        <SectionIntro
-          kicker="Archive"
-          title="Latest published entries"
-          description="Everything beyond the current feature set stays easy to scan on desktop and comfortable on small screens."
-        />
-        <ArchiveList posts={archiveStories} emptyMessage="More published posts will appear here." />
+        ) : (
+          <div className="empty-box">첫 글 외에 추가 글이 생기면 이 목록에 차례로 쌓입니다.</div>
+        )}
       </section>
     </div>
   );
@@ -465,6 +335,8 @@ export function PostPage() {
   const { slug = "" } = useParams();
   const [post, setPost] = useState<Post | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeHeading, setActiveHeading] = useState("");
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     void getPost(slug)
@@ -478,80 +350,97 @@ export function PostPage() {
       });
   }, [slug]);
 
+  useEffect(() => {
+    if (!post) {
+      return;
+    }
+
+    const headings = extractTocHeadings(post.content);
+
+    const updateReadingState = () => {
+      const documentElement = document.documentElement;
+      const maxScroll = documentElement.scrollHeight - documentElement.clientHeight;
+      const nextProgress = maxScroll > 0 ? Math.min(100, (window.scrollY / maxScroll) * 100) : 0;
+      setProgress(nextProgress);
+
+      if (!headings.length) {
+        setActiveHeading("");
+        return;
+      }
+
+      let current = headings[0]?.id ?? "";
+
+      for (const heading of headings) {
+        const element = document.getElementById(heading.id);
+
+        if (element && element.getBoundingClientRect().top <= 120) {
+          current = heading.id;
+        }
+      }
+
+      setActiveHeading(current);
+    };
+
+    updateReadingState();
+    window.addEventListener("scroll", updateReadingState, { passive: true });
+    window.addEventListener("resize", updateReadingState);
+
+    return () => {
+      window.removeEventListener("scroll", updateReadingState);
+      window.removeEventListener("resize", updateReadingState);
+    };
+  }, [post]);
+
   return (
-    <article className="space-y-6">
+    <div className="simple-page">
       <ErrorMessage message={error} />
-      <Card className="surface-outline overflow-hidden">
-        <CardContent className="space-y-8 p-6 sm:p-8 lg:p-10 xl:p-12">
-          <div className="space-y-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="story-chip">
-                <span className="section-kicker !tracking-[0.26em]">Article</span>
-              </span>
-              <Button asChild variant="ghost" size="sm" className="rounded-full">
-                <Link to="/">Back to home</Link>
-              </Button>
-            </div>
+      <div className="simple-reading-progress" aria-hidden="true">
+        <span className="simple-reading-progress__bar" style={{ width: `${progress}%` }} />
+      </div>
 
-            <div className="space-y-4">
-              <h1 className="max-w-4xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-                {post?.title ?? "Loading article"}
-              </h1>
-              {post?.subtitle || post?.excerpt ? (
-                <p className="max-w-3xl text-lg leading-8 text-[var(--color-soft-ink)]">
-                  {post.excerpt || post.subtitle}
-                </p>
-              ) : null}
-            </div>
-
-            {post ? (
-              <div className="flex flex-wrap gap-2">
-                <Badge variant={statusVariant(post.status)}>{post.status}</Badge>
-                <MetaPill label="Published" value={new Date(post.publishedAt ?? post.updatedAt).toLocaleDateString()} />
-                <MetaPill label="Category" value={post.category?.name ?? "Uncategorized"} />
+      <article className="article-page">
+        <header className="article-page__header">
+          <div className="post-row__meta">
+            <CategoryChip category={post?.category} />
+            <span>{formatDate(post?.publishedAt ?? post?.updatedAt)}</span>
+            <span>{post ? `${estimateReadMinutes(post.content)}분 읽기` : ""}</span>
+          </div>
+          <h1>{post?.title ?? "글 불러오는 중"}</h1>
+          {post?.subtitle || post?.excerpt ? (
+            <p className="article-page__summary">{post.excerpt || post.subtitle}</p>
+          ) : null}
+          <div className="article-page__actions">
+            <Link to="/" className="simple-inline-link">
+              홈으로 돌아가기
+            </Link>
+            {post?.tags.length ? (
+              <div className="article-tags">
                 {post.tags.map((tag) => (
-                  <Link
-                    key={tag.id}
-                    to={`/tag/${tag.slug}`}
-                    className="story-chip hover:text-[var(--color-accent)]"
-                  >
+                  <Link key={tag.id} to={`/tag/${tag.slug}`} className="simple-chip">
                     #{tag.name}
                   </Link>
                 ))}
               </div>
             ) : null}
           </div>
+        </header>
 
-          {post?.coverImage ? (
-            <div className="overflow-hidden rounded-[32px] border border-black/5 shadow-[0_24px_80px_rgba(24,32,43,0.12)]">
-              <img src={post.coverImage} alt={post.title} className="h-full max-h-[520px] w-full object-cover" />
-            </div>
-          ) : null}
+        {post?.coverImage ? (
+          <div className="article-cover">
+            <img src={post.coverImage} alt={post.title} />
+          </div>
+        ) : null}
 
-          {post ? (
-            <MarkdownContent content={post.content} />
-          ) : (
-            <div className="rounded-[28px] border border-black/5 bg-white/65 px-5 py-8 text-[var(--color-soft-ink)]">
-              The requested post could not be loaded.
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </article>
-  );
-}
+        {post?.youtubeUrl ? <VideoEmbed title={post.title} youtubeUrl={post.youtubeUrl} /> : null}
 
-function ArchiveHero(props: { kicker: string; title: string; description: string }) {
-  return (
-    <Card className="surface-outline overflow-hidden">
-      <CardContent className="space-y-4 p-6 sm:p-8">
-        <span className="story-chip">
-          <span className="section-kicker !tracking-[0.26em]">{props.kicker}</span>
-        </span>
-        <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">{props.title}</h1>
-        <p className="max-w-3xl text-base leading-7 text-[var(--color-soft-ink)]">{props.description}</p>
-      </CardContent>
-    </Card>
+        <div className="article-layout">
+          <div className="article-content-wrap">
+            {post ? <MarkdownContent content={post.content} /> : <div className="empty-box">요청한 글을 불러오지 못했습니다.</div>}
+          </div>
+          {post ? <TableOfContents content={post.content} activeHeading={activeHeading} /> : null}
+        </div>
+      </article>
+    </div>
   );
 }
 
@@ -573,14 +462,22 @@ export function CategoryArchivePage() {
   }, [slug]);
 
   return (
-    <div className="space-y-6">
+    <div className="simple-page">
       <ErrorMessage message={error} />
-      <ArchiveHero
-        kicker="Category archive"
-        title={feed?.category.name ?? "Category archive"}
-        description={feed?.category.description ?? "A curated shelf grouped by topic."}
+      <ArchiveHeader
+        eyebrow="카테고리"
+        title={feed?.category.name ?? "카테고리"}
+        description={feed?.category.description ?? "선택한 카테고리에 속한 글 목록입니다."}
       />
-      <ArchiveList posts={feed?.posts ?? []} emptyMessage="No published posts matched this category yet." />
+      {feed?.posts.length ? (
+        <div className="post-list">
+          {feed.posts.map((post) => (
+            <PostListItem key={post.id} post={post} />
+          ))}
+        </div>
+      ) : (
+        <div className="empty-box">이 카테고리에 공개된 글이 아직 없습니다.</div>
+      )}
     </div>
   );
 }
@@ -602,33 +499,32 @@ export function TagArchivePage() {
       });
   }, [slug]);
 
-  const description = useMemo(
-    () => (feed ? `Tagged posts collected under #${feed.tag.name}.` : "A keyword-driven archive."),
-    [feed],
-  );
-
   return (
-    <div className="space-y-6">
+    <div className="simple-page">
       <ErrorMessage message={error} />
-      <ArchiveHero kicker="Tag archive" title={feed ? `#${feed.tag.name}` : "Tag archive"} description={description} />
-      <ArchiveList posts={feed?.posts ?? []} emptyMessage="No published posts matched this tag yet." />
+      <ArchiveHeader
+        eyebrow="태그"
+        title={feed ? `#${feed.tag.name}` : "태그"}
+        description={feed ? `#${feed.tag.name}로 묶인 글입니다.` : "선택한 태그의 글 목록입니다."}
+      />
+      {feed?.posts.length ? (
+        <div className="post-list">
+          {feed.posts.map((post) => (
+            <PostListItem key={post.id} post={post} />
+          ))}
+        </div>
+      ) : (
+        <div className="empty-box">이 태그에 공개된 글이 아직 없습니다.</div>
+      )}
     </div>
   );
 }
 
 export function StaticInfoPage(props: { title: string; description: string }) {
   return (
-    <Card className="surface-outline overflow-hidden">
-      <CardContent className="space-y-5 p-8">
-        <span className="story-chip">
-          <span className="section-kicker !tracking-[0.26em]">{props.title}</span>
-        </span>
-        <h1 className="text-4xl font-semibold tracking-tight">{props.title}</h1>
-        <p className="max-w-2xl text-base leading-7 text-[var(--color-soft-ink)]">{props.description}</p>
-        <div className="rounded-[24px] border border-black/5 bg-white/65 px-5 py-8 text-[var(--color-soft-ink)]">
-          This page is intentionally reserved for the next milestone.
-        </div>
-      </CardContent>
-    </Card>
+    <div className="simple-page">
+      <ArchiveHeader eyebrow={props.title} title={props.title} description={props.description} />
+      <div className="empty-box">이 페이지는 아직 준비 중입니다.</div>
+    </div>
   );
 }

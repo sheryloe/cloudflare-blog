@@ -12,11 +12,11 @@ import { Button, ErrorMessage, ShellCard } from "./ui";
 const PUBLIC_APP_URL = import.meta.env.VITE_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "http://localhost:5173";
 
 const adminLinks = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, description: "Workspace overview" },
-  { to: "/posts", label: "Posts", icon: PanelsTopLeft, description: "Write and publish" },
-  { to: "/media", label: "Media", icon: Upload, description: "R2 upload library" },
-  { to: "/categories", label: "Categories", icon: Library, description: "Archive structure" },
-  { to: "/tags", label: "Tags", icon: Tags, description: "Discovery labels" },
+  { to: "/dashboard", label: "대시보드", icon: LayoutDashboard, description: "작업 현황 요약" },
+  { to: "/posts", label: "글", icon: PanelsTopLeft, description: "작성과 발행 관리" },
+  { to: "/media", label: "미디어", icon: Upload, description: "R2 파일 보관함" },
+  { to: "/categories", label: "카테고리", icon: Library, description: "아카이브 구조" },
+  { to: "/tags", label: "태그", icon: Tags, description: "탐색용 라벨" },
 ];
 
 function useWorkspaceHeading() {
@@ -27,8 +27,8 @@ function useWorkspaceHeading() {
 
     if (!current) {
       return {
-        title: "Content Operations",
-        description: "A publishing workspace tuned for editing, review, and media management.",
+        title: "콘텐츠 관리",
+        description: "작성, 검토, 분류, 미디어 관리를 위한 관리자 화면입니다.",
       };
     }
 
@@ -59,9 +59,9 @@ export function AdminLayout() {
                 <p className="section-kicker !tracking-[0.28em]">Donggeuri Admin</p>
               </div>
               <div className="space-y-2">
-                <h1 className="text-3xl font-semibold tracking-tight text-[var(--color-ink)]">Publishing ops</h1>
+                <h1 className="text-3xl font-semibold tracking-tight text-[var(--color-ink)]">글 관리</h1>
                 <p className="text-sm leading-7 text-[var(--color-soft-ink)]">
-                  Separate Pages workspace for editing, taxonomy, and media handling.
+                  글 작성, 분류 정리, 이미지 업로드를 한 곳에서 처리하는 관리자 화면입니다.
                 </p>
               </div>
             </div>
@@ -103,18 +103,18 @@ export function AdminLayout() {
 
           <div className="admin-panel overflow-hidden p-5">
             <div className="space-y-4">
-              <p className="section-kicker">Session</p>
+              <p className="section-kicker">세션</p>
               <div>
-                <p className="text-sm text-[var(--color-soft-ink)]">Signed in as</p>
-                <p className="mt-1 text-base font-semibold text-[var(--color-ink)]">{auth.session.user?.email ?? "Signed in"}</p>
+                <p className="text-sm text-[var(--color-soft-ink)]">로그인 계정</p>
+                <p className="mt-1 text-base font-semibold text-[var(--color-ink)]">{auth.session.user?.email ?? "로그인됨"}</p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button asChild variant="soft" className="rounded-full">
-                  <a href={PUBLIC_APP_URL}>Public site</a>
+                  <a href={PUBLIC_APP_URL}>공개 블로그</a>
                 </Button>
                 <Button variant="outline" onClick={() => void handleLogout()} className="rounded-full">
                   <LogOut className="h-4 w-4" />
-                  Logout
+                  로그아웃
                 </Button>
               </div>
             </div>
@@ -126,7 +126,7 @@ export function AdminLayout() {
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
               <div className="space-y-4">
                 <div className="inline-flex w-fit items-center rounded-full border border-black/8 bg-white/70 px-3 py-1.5 shadow-sm">
-                  <p className="section-kicker !tracking-[0.28em]">Authenticated workspace</p>
+                  <p className="section-kicker !tracking-[0.28em]">로그인된 작업 공간</p>
                 </div>
                 <div className="space-y-2">
                   <h2 className="text-4xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-5xl">
@@ -140,16 +140,16 @@ export function AdminLayout() {
 
               <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                 <div className="rounded-[24px] border border-black/6 bg-[linear-gradient(135deg,rgba(22,35,56,0.96),rgba(41,67,104,0.92))] p-4 text-white shadow-[0_20px_70px_rgba(22,35,56,0.24)]">
-                  <p className="section-kicker !text-[rgba(255,234,214,0.82)]">Routing</p>
-                  <p className="mt-2 text-lg font-semibold tracking-tight">Admin-only</p>
+                  <p className="section-kicker !text-[rgba(255,234,214,0.82)]">접속 범위</p>
+                  <p className="mt-2 text-lg font-semibold tracking-tight">관리자 전용</p>
                 </div>
                 <div className="rounded-[24px] border border-black/6 bg-white/72 p-4 shadow-sm">
-                  <p className="section-kicker">Storage</p>
+                  <p className="section-kicker">저장소</p>
                   <p className="mt-2 text-lg font-semibold tracking-tight">D1 + R2</p>
                 </div>
                 <div className="rounded-[24px] border border-black/6 bg-white/72 p-4 shadow-sm">
-                  <p className="section-kicker">Session</p>
-                  <p className="mt-2 text-lg font-semibold tracking-tight">Cookie-based</p>
+                  <p className="section-kicker">세션</p>
+                  <p className="mt-2 text-lg font-semibold tracking-tight">쿠키 기반</p>
                 </div>
               </div>
             </div>
@@ -199,38 +199,38 @@ export function LoginPage() {
               <p className="section-kicker !tracking-[0.28em]">Donggeuri Admin</p>
             </div>
             <div className="space-y-3">
-              <h1 className="text-5xl font-semibold tracking-tight text-[var(--color-ink)]">A focused publishing cockpit.</h1>
+              <h1 className="text-5xl font-semibold tracking-tight text-[var(--color-ink)]">차분한 글쓰기 작업실.</h1>
               <p className="max-w-xl text-base leading-8 text-[var(--color-soft-ink)]">
-                Review drafts, push media to R2, and shape the archive from a separate admin surface built for operational clarity.
+                초안을 다듬고, 이미지를 올리고, 카테고리를 정리하는 작업을 복잡하지 않게 처리할 수 있도록 구성했습니다.
               </p>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-[24px] border border-black/6 bg-white/72 p-4 shadow-sm">
-              <p className="section-kicker">Split</p>
-              <p className="mt-2 text-lg font-semibold tracking-tight">Separate Pages app</p>
+              <p className="section-kicker">구조</p>
+              <p className="mt-2 text-lg font-semibold tracking-tight">분리된 관리자 앱</p>
             </div>
             <div className="rounded-[24px] border border-black/6 bg-white/72 p-4 shadow-sm">
-              <p className="section-kicker">Auth</p>
-              <p className="mt-2 text-lg font-semibold tracking-tight">Cookie session</p>
+              <p className="section-kicker">인증</p>
+              <p className="mt-2 text-lg font-semibold tracking-tight">쿠키 세션</p>
             </div>
             <div className="rounded-[24px] border border-black/6 bg-white/72 p-4 shadow-sm">
               <p className="section-kicker">API</p>
-              <p className="mt-2 text-lg font-semibold tracking-tight">Worker-backed</p>
+              <p className="mt-2 text-lg font-semibold tracking-tight">Worker 기반</p>
             </div>
           </div>
         </section>
 
         <div className="w-full">
           <ShellCard
-            title="Admin login"
-            description="Sign in to access the editorial workspace and its protected content operations."
+            title="관리자 로그인"
+            description="글 작성과 편집, 분류 관리, 이미지 업로드를 하려면 로그인해야 합니다."
             className="min-h-full"
           >
             <form className="grid gap-5" onSubmit={handleSubmit}>
               <label className="block">
-                <span className="field-label">Email</span>
+                <span className="field-label">이메일</span>
                 <Input
                   type="email"
                   value={form.email}
@@ -239,7 +239,7 @@ export function LoginPage() {
                 />
               </label>
               <label className="block">
-                <span className="field-label">Password</span>
+                <span className="field-label">비밀번호</span>
                 <Input
                   type="password"
                   value={form.password}
@@ -250,10 +250,10 @@ export function LoginPage() {
               <ErrorMessage message={error} />
               <div className="flex flex-wrap items-center gap-3">
                 <Button type="submit" disabled={submitting} className="min-w-36 rounded-full">
-                  {submitting ? "Signing in..." : "Login"}
+                  {submitting ? "로그인 중..." : "로그인"}
                 </Button>
                 <Button asChild variant="soft" className="rounded-full">
-                  <a href={PUBLIC_APP_URL}>Back to public site</a>
+                  <a href={PUBLIC_APP_URL}>공개 블로그로</a>
                 </Button>
               </div>
             </form>

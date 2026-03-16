@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-import { getSession, login, logout } from "./lib/api";
+import { clearStoredAdminToken, getSession, login, logout } from "./lib/api";
 import { LoadingPanel } from "./ui";
 
 type AuthContextValue = {
@@ -31,6 +31,7 @@ export function AuthProvider(props: { children: ReactNode }) {
     try {
       setSession(await getSession());
     } catch {
+      clearStoredAdminToken();
       setSession(EMPTY_SESSION);
     } finally {
       setLoading(false);
@@ -50,7 +51,11 @@ export function AuthProvider(props: { children: ReactNode }) {
         setSession(await login(credentials));
       },
       signOut: async () => {
-        await logout();
+        try {
+          await logout();
+        } finally {
+          clearStoredAdminToken();
+        }
         setSession(EMPTY_SESSION);
       },
     }),

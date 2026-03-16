@@ -12,6 +12,13 @@ import type {
   UpdatePostInput,
 } from "@donggeuri/shared";
 
+const ADMIN_TOKEN_STORAGE_KEY = "donggeuri_admin_token";
+
+type LoginResult = {
+  session: AdminSession;
+  token: string;
+};
+
 function resolveApiBaseUrl() {
   const configured = import.meta.env.VITE_API_BASE_URL?.trim();
 
@@ -27,6 +34,30 @@ function resolveApiBaseUrl() {
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
+
+function getStoredAdminToken() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+}
+
+function setStoredAdminToken(token: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+}
+
+export function clearStoredAdminToken() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+}
 
 export class ApiError extends Error {
   constructor(
@@ -48,6 +79,12 @@ async function request<T>(
   if (init.json !== undefined) {
     headers.set("Content-Type", "application/json");
     body = JSON.stringify(init.json);
+  }
+
+  const token = getStoredAdminToken();
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -81,9 +118,12 @@ export function getSession() {
 }
 
 export function login(credentials: LoginInput) {
-  return request<AdminSession>("/api/admin/login", {
+  return request<LoginResult>("/api/admin/login", {
     method: "POST",
     json: credentials,
+  }).then((result) => {
+    setStoredAdminToken(result.token);
+    return result.session;
   });
 }
 

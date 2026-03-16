@@ -64,8 +64,17 @@ adminRoutes.post("/login", async (c) => {
     return fail(c, 401, "INVALID_CREDENTIALS", "The provided login credentials were not accepted.");
   }
 
-  await createAdminSession(c, parsed.data.email.trim().toLowerCase());
-  return ok(c, await getAdminSession(c));
+  const email = parsed.data.email.trim().toLowerCase();
+  const token = await createAdminSession(c, email);
+  return ok(c, {
+    session: {
+      authenticated: true,
+      user: {
+        email,
+      },
+    },
+    token,
+  });
 });
 
 adminRoutes.post("/logout", async (c) => {

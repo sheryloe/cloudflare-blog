@@ -111,7 +111,7 @@ function buildPostInput(form: PostFormState): CreatePostInput {
 function StatCard(props: { label: string; value: number }) {
   return (
     <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(244,247,251,0.8))] p-5 shadow-[0_18px_60px_rgba(19,32,51,0.08)]">
-      <p className="section-kicker">Overview</p>
+      <p className="section-kicker">현황</p>
       <div className="mt-4 text-4xl font-semibold tracking-tight text-[var(--color-ink)]">{props.value}</div>
       <p className="mt-2 text-sm text-[var(--color-soft-ink)]">{props.label}</p>
     </div>
@@ -139,19 +139,19 @@ export function DashboardPage() {
 
   return (
     <>
-      <ShellCard title="Workspace status" description="A quick editorial snapshot of the current system.">
+      <ShellCard title="작업 현황" description="현재 관리자 화면의 핵심 상태를 빠르게 확인합니다.">
         <ErrorMessage message={error} />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <StatCard label="Total posts" value={posts.length} />
-          <StatCard label="Drafts" value={posts.filter((post) => post.status === "draft").length} />
-          <StatCard label="Published" value={posts.filter((post) => post.status === "published").length} />
-          <StatCard label="Media assets" value={media.length} />
-          <StatCard label="Categories" value={categories.length} />
-          <StatCard label="Tags" value={tags.length} />
+          <StatCard label="전체 글" value={posts.length} />
+          <StatCard label="초안" value={posts.filter((post) => post.status === "draft").length} />
+          <StatCard label="공개 글" value={posts.filter((post) => post.status === "published").length} />
+          <StatCard label="미디어" value={media.length} />
+          <StatCard label="카테고리" value={categories.length} />
+          <StatCard label="태그" value={tags.length} />
         </div>
       </ShellCard>
 
-      <ShellCard title="Recent updates" description="The latest content changes in D1.">
+      <ShellCard title="최근 변경" description="최근 수정된 글을 확인합니다.">
         {posts.length ? (
           <div className="grid gap-4">
             {posts.slice(0, 6).map((post) => (
@@ -171,7 +171,7 @@ export function DashboardPage() {
           </div>
         ) : (
           <div className="rounded-[24px] bg-[var(--color-paper-muted)] px-5 py-8 text-[var(--color-soft-ink)]">
-            No posts created yet.
+            아직 작성된 글이 없습니다.
           </div>
         )}
       </ShellCard>
@@ -188,7 +188,7 @@ export function PostsPage() {
       setPosts(await listAdminPosts());
       setError(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Failed to load posts.");
+      setError(reason instanceof Error ? reason.message : "글 목록을 불러오지 못했습니다.");
     }
   };
 
@@ -197,7 +197,7 @@ export function PostsPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this post?")) {
+    if (!window.confirm("이 글을 삭제할까요?")) {
       return;
     }
 
@@ -205,19 +205,19 @@ export function PostsPage() {
       await deleteAdminPost(id);
       await refresh();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Delete failed.");
+      setError(reason instanceof Error ? reason.message : "삭제에 실패했습니다.");
     }
   };
 
   return (
     <ShellCard
-      title="Posts"
-      description="Create, edit, publish, and archive content."
+      title="글 목록"
+      description="작성한 글을 수정하고, 공개 상태를 관리합니다."
       actions={
         <Button asChild>
           <Link to="/posts/new">
             <Plus className="h-4 w-4" />
-            New post
+            새 글
           </Link>
         </Button>
       }
@@ -244,17 +244,17 @@ export function PostsPage() {
                   <Button asChild variant="soft">
                     <Link to={`/posts/${post.id}/edit`}>
                       <PenSquare className="h-4 w-4" />
-                      Edit
+                      수정
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <a href={`${PUBLIC_APP_URL}/post/${post.slug}`} target="_blank" rel="noreferrer">
-                      Preview
+                      미리보기
                     </a>
                   </Button>
                   <Button variant="ghost" onClick={() => void handleDelete(post.id)}>
                     <Trash2 className="h-4 w-4" />
-                    Delete
+                    삭제
                   </Button>
                 </div>
               </div>
@@ -263,7 +263,7 @@ export function PostsPage() {
         </div>
       ) : (
           <div className="rounded-[24px] bg-[var(--color-paper-muted)] px-5 py-8 text-[var(--color-soft-ink)]">
-            No posts yet. Create the first one from this screen.
+            아직 글이 없습니다. 이 화면에서 첫 글을 작성할 수 있습니다.
           </div>
       )}
     </ShellCard>
@@ -325,123 +325,142 @@ export function PostEditorPage() {
 
       navigate("/posts", { replace: true });
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Failed to save post.");
+      setError(reason instanceof Error ? reason.message : "글 저장에 실패했습니다.");
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <LoadingPanel message="Preparing the post editor." />;
+    return <LoadingPanel message="편집 화면을 준비하는 중입니다." />;
   }
 
   return (
-    <ShellCard title={isEdit ? "Edit post" : "Create post"} description="Write content and manage publishing metadata.">
-      <form className="grid gap-6" onSubmit={handleSubmit}>
-        <div className="grid gap-4 xl:grid-cols-2">
-          <label className="block">
-            <span className="field-label">Title</span>
-            <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} required />
-          </label>
-          <label className="block">
-            <span className="field-label">Slug</span>
-            <Input value={form.slug} onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))} placeholder="auto-generated if empty" />
-          </label>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-2">
-          <label className="block">
-            <span className="field-label">Subtitle</span>
-            <Input value={form.subtitle} onChange={(event) => setForm((current) => ({ ...current, subtitle: event.target.value }))} />
-          </label>
-          <label className="block">
-            <span className="field-label">YouTube URL</span>
-            <Input value={form.youtubeUrl} onChange={(event) => setForm((current) => ({ ...current, youtubeUrl: event.target.value }))} />
-          </label>
-        </div>
-
-        <label className="block">
-          <span className="field-label">Excerpt</span>
-          <Textarea rows={4} value={form.excerpt} onChange={(event) => setForm((current) => ({ ...current, excerpt: event.target.value }))} />
-        </label>
-
-        <label className="block">
-          <span className="field-label">Content</span>
-          <Textarea rows={16} value={form.content} onChange={(event) => setForm((current) => ({ ...current, content: event.target.value }))} required className="min-h-[360px]" />
-        </label>
-
-        <div className="grid gap-4 xl:grid-cols-3">
-          <label className="block">
-            <span className="field-label">Status</span>
-            <Select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as PostStatus }))}>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </Select>
-          </label>
-          <label className="block">
-            <span className="field-label">Published at</span>
-            <Input type="datetime-local" value={form.publishedAt} onChange={(event) => setForm((current) => ({ ...current, publishedAt: event.target.value }))} />
-          </label>
-          <label className="block">
-            <span className="field-label">Category</span>
-            <Select value={form.categoryId} onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}>
-              <option value="">No category</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </Select>
-          </label>
-        </div>
-
-        <label className="block">
-          <span className="field-label">Cover image</span>
-          <Select value={form.coverImage} onChange={(event) => setForm((current) => ({ ...current, coverImage: event.target.value }))}>
-            <option value="">No cover image</option>
-            {media.map((asset) => (
-              <option key={asset.id} value={asset.url}>
-                {asset.path}
-              </option>
-            ))}
-          </Select>
-        </label>
-
-        <div className="space-y-3">
-          <span className="field-label">Tags</span>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {tags.map((tag) => (
-              <label
-                key={tag.id}
-                className="flex items-center gap-3 rounded-[22px] border border-black/5 bg-white/60 px-4 py-3"
-              >
-                <input
-                  type="checkbox"
-                  checked={form.tagIds.includes(tag.id)}
-                  onChange={() => handleTagToggle(tag.id)}
-                  className="h-4 w-4 rounded border-black/20 text-[var(--color-accent)]"
-                />
-                <span className="text-sm font-medium">{tag.name}</span>
-              </label>
-            ))}
-            {tags.length === 0 ? (
-              <div className="rounded-[22px] bg-[var(--color-paper-muted)] px-4 py-4 text-sm text-[var(--color-soft-ink)]">
-                Create tags first to attach them here.
-              </div>
-            ) : null}
+    <ShellCard
+      title={isEdit ? "글 수정" : "새 글 작성"}
+      description="티스토리처럼 본문을 먼저 쓰고, 발행 설정은 오른쪽에서 정리하는 구조로 단순화했습니다."
+    >
+      <form className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]" onSubmit={handleSubmit}>
+        <div className="space-y-6">
+          <div className="grid gap-4 xl:grid-cols-2">
+            <label className="block">
+              <span className="field-label">제목</span>
+              <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} required />
+            </label>
+            <label className="block">
+              <span className="field-label">슬러그</span>
+              <Input value={form.slug} onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))} placeholder="비워두면 자동 생성" />
+            </label>
           </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <label className="block">
+              <span className="field-label">부제</span>
+              <Input value={form.subtitle} onChange={(event) => setForm((current) => ({ ...current, subtitle: event.target.value }))} />
+            </label>
+            <label className="block">
+              <span className="field-label">유튜브 URL</span>
+              <Input value={form.youtubeUrl} onChange={(event) => setForm((current) => ({ ...current, youtubeUrl: event.target.value }))} />
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="field-label">요약</span>
+            <Textarea rows={4} value={form.excerpt} onChange={(event) => setForm((current) => ({ ...current, excerpt: event.target.value }))} />
+          </label>
+
+          <label className="block">
+            <span className="field-label">본문</span>
+            <Textarea
+              rows={20}
+              value={form.content}
+              onChange={(event) => setForm((current) => ({ ...current, content: event.target.value }))}
+              required
+              className="min-h-[420px]"
+            />
+          </label>
         </div>
 
-        <ErrorMessage message={error} />
+        <aside className="space-y-4">
+          <div className="rounded-[24px] border border-black/6 bg-white/70 p-5 shadow-sm">
+            <p className="section-kicker">발행 설정</p>
+            <div className="mt-4 grid gap-4">
+              <label className="block">
+                <span className="field-label">상태</span>
+                <Select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as PostStatus }))}>
+                  <option value="draft">초안</option>
+                  <option value="published">공개</option>
+                  <option value="archived">보관</option>
+                </Select>
+              </label>
+              <label className="block">
+                <span className="field-label">발행일</span>
+                <Input type="datetime-local" value={form.publishedAt} onChange={(event) => setForm((current) => ({ ...current, publishedAt: event.target.value }))} />
+              </label>
+              <label className="block">
+                <span className="field-label">카테고리</span>
+                <Select value={form.categoryId} onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}>
+                  <option value="">카테고리 없음</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            </div>
+          </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" disabled={saving}>
-            {saving ? "Saving..." : isEdit ? "Save changes" : "Create post"}
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/posts">Back to posts</Link>
-          </Button>
+          <div className="rounded-[24px] border border-black/6 bg-white/70 p-5 shadow-sm">
+            <p className="section-kicker">대표 이미지</p>
+            <div className="mt-4">
+              <label className="block">
+                <span className="field-label">커버 이미지</span>
+                <Select value={form.coverImage} onChange={(event) => setForm((current) => ({ ...current, coverImage: event.target.value }))}>
+                  <option value="">대표 이미지 없음</option>
+                  {media.map((asset) => (
+                    <option key={asset.id} value={asset.url}>
+                      {asset.path}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-black/6 bg-white/70 p-5 shadow-sm">
+            <p className="section-kicker">태그</p>
+            <div className="mt-4 grid gap-3">
+              {tags.map((tag) => (
+                <label key={tag.id} className="flex items-center gap-3 rounded-[18px] border border-black/5 bg-white/80 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={form.tagIds.includes(tag.id)}
+                    onChange={() => handleTagToggle(tag.id)}
+                    className="h-4 w-4 rounded border-black/20 text-[var(--color-accent)]"
+                  />
+                  <span className="text-sm font-medium">{tag.name}</span>
+                </label>
+              ))}
+              {tags.length === 0 ? (
+                <div className="rounded-[18px] bg-[var(--color-paper-muted)] px-4 py-4 text-sm text-[var(--color-soft-ink)]">
+                  먼저 태그를 만든 뒤 이곳에서 연결할 수 있습니다.
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </aside>
+
+        <div className="xl:col-span-2 space-y-4">
+          <ErrorMessage message={error} />
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" disabled={saving}>
+              {saving ? "저장 중..." : isEdit ? "변경 사항 저장" : "글 만들기"}
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/posts">글 목록으로</Link>
+            </Button>
+          </div>
         </div>
       </form>
     </ShellCard>

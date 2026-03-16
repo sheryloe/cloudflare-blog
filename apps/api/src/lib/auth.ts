@@ -92,6 +92,17 @@ async function createSessionToken(email: string, secret: string) {
   return `${payload}.${signature}`;
 }
 
+function getBearerToken(c: Context<AppEnv>) {
+  const authorization = c.req.header("Authorization")?.trim();
+
+  if (!authorization) {
+    return null;
+  }
+
+  const match = /^Bearer\s+(.+)$/i.exec(authorization);
+  return match?.[1]?.trim() || null;
+}
+
 async function verifySessionToken(token: string, secret: string): Promise<SessionPayload | null> {
   const [payloadPart, signaturePart] = token.split(".");
 
@@ -138,7 +149,7 @@ export async function verifyAdminCredentials(
 }
 
 export async function getAdminSession(c: Context<AppEnv>): Promise<AdminSession> {
-  const token = getCookie(c, SESSION_COOKIE_NAME);
+  const token = getBearerToken(c) ?? getCookie(c, SESSION_COOKIE_NAME);
 
   if (!token || !c.env.JWT_SECRET) {
     return {
@@ -168,8 +179,8 @@ export async function createAdminSession(c: Context<AppEnv>, email: string) {
   const token = await createSessionToken(email, requireJwtSecret(c.env.JWT_SECRET));
   const secure = new URL(c.req.url).protocol === "https:";
 
-  // This is a host-only, same-site session cookie intended for deployments
-  // under the same eTLD+1 such as blog.example.com, admin.example.com, and api.example.com.
+  // Keep the cookie for same-site custom-domain deployments, but also return
+  // the token so the Pages admin app can use Authorization headers on pages.dev.
   setCookie(c, SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "Lax",
@@ -177,6 +188,8 @@ export async function createAdminSession(c: Context<AppEnv>, email: string) {
     path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS,
   });
+
+  return token;
 }
 
 export function clearAdminSession(c: Context<AppEnv>) {

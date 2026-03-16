@@ -35,6 +35,14 @@ function mapPostSummary(row: Record<string, unknown>): PostSummary {
     subtitle: row.subtitle ? String(row.subtitle) : null,
     excerpt: row.excerpt ? String(row.excerpt) : null,
     coverImage: row.cover_image ? String(row.cover_image) : null,
+    category: row.category_id
+      ? {
+          id: String(row.category_id),
+          slug: String(row.category_slug),
+          name: String(row.category_name),
+          description: row.category_description ? String(row.category_description) : null,
+        }
+      : null,
     status: String(row.status) as PostSummary["status"],
     publishedAt: row.published_at ? String(row.published_at) : null,
     createdAt: String(row.created_at),
@@ -108,10 +116,25 @@ export async function listPublishedPosts(db: D1Database) {
   const result = await db
     .prepare(
       `
-        SELECT id, slug, title, subtitle, excerpt, cover_image, status, published_at, created_at, updated_at
-        FROM posts
-        WHERE status = 'published'
-        ORDER BY COALESCE(published_at, created_at) DESC
+        SELECT
+          p.id,
+          p.slug,
+          p.title,
+          p.subtitle,
+          p.excerpt,
+          p.cover_image,
+          p.status,
+          p.published_at,
+          p.created_at,
+          p.updated_at,
+          c.id AS category_id,
+          c.slug AS category_slug,
+          c.name AS category_name,
+          c.description AS category_description
+        FROM posts p
+        LEFT JOIN categories c ON c.id = p.category_id
+        WHERE p.status = 'published'
+        ORDER BY COALESCE(p.published_at, p.created_at) DESC
       `,
     )
     .all<Record<string, unknown>>();
@@ -123,9 +146,24 @@ export async function listAdminPosts(db: D1Database) {
   const result = await db
     .prepare(
       `
-        SELECT id, slug, title, subtitle, excerpt, cover_image, status, published_at, created_at, updated_at
-        FROM posts
-        ORDER BY updated_at DESC
+        SELECT
+          p.id,
+          p.slug,
+          p.title,
+          p.subtitle,
+          p.excerpt,
+          p.cover_image,
+          p.status,
+          p.published_at,
+          p.created_at,
+          p.updated_at,
+          c.id AS category_id,
+          c.slug AS category_slug,
+          c.name AS category_name,
+          c.description AS category_description
+        FROM posts p
+        LEFT JOIN categories c ON c.id = p.category_id
+        ORDER BY p.updated_at DESC
       `,
     )
     .all<Record<string, unknown>>();
@@ -247,10 +285,25 @@ export async function getCategoryFeedBySlug(db: D1Database, slug: string): Promi
   const postsResult = await db
     .prepare(
       `
-        SELECT id, slug, title, subtitle, excerpt, cover_image, status, published_at, created_at, updated_at
-        FROM posts
-        WHERE category_id = ?1 AND status = 'published'
-        ORDER BY COALESCE(published_at, created_at) DESC
+        SELECT
+          p.id,
+          p.slug,
+          p.title,
+          p.subtitle,
+          p.excerpt,
+          p.cover_image,
+          p.status,
+          p.published_at,
+          p.created_at,
+          p.updated_at,
+          c.id AS category_id,
+          c.slug AS category_slug,
+          c.name AS category_name,
+          c.description AS category_description
+        FROM posts p
+        LEFT JOIN categories c ON c.id = p.category_id
+        WHERE p.category_id = ?1 AND p.status = 'published'
+        ORDER BY COALESCE(p.published_at, p.created_at) DESC
       `,
     )
     .bind(String(category.id))
@@ -282,8 +335,23 @@ export async function getTagFeedBySlug(db: D1Database, slug: string): Promise<Ta
   const postsResult = await db
     .prepare(
       `
-        SELECT p.id, p.slug, p.title, p.subtitle, p.excerpt, p.cover_image, p.status, p.published_at, p.created_at, p.updated_at
+        SELECT
+          p.id,
+          p.slug,
+          p.title,
+          p.subtitle,
+          p.excerpt,
+          p.cover_image,
+          p.status,
+          p.published_at,
+          p.created_at,
+          p.updated_at,
+          c.id AS category_id,
+          c.slug AS category_slug,
+          c.name AS category_name,
+          c.description AS category_description
         FROM posts p
+        LEFT JOIN categories c ON c.id = p.category_id
         INNER JOIN post_tags pt ON pt.post_id = p.id
         WHERE pt.tag_id = ?1 AND p.status = 'published'
         ORDER BY COALESCE(p.published_at, p.created_at) DESC

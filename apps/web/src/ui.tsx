@@ -28,13 +28,11 @@ export function ShellCard(props: {
   className?: string;
 }) {
   return (
-    <Card className={cn("surface-outline overflow-hidden", props.className)}>
-      <CardHeader className="gap-4 border-b border-black/5 bg-white/35">
+    <Card className={cn("overflow-hidden border-white/70 bg-[var(--color-panel)] shadow-[0_22px_80px_var(--color-shadow)]", props.className)}>
+      <CardHeader className="gap-4 border-b border-[var(--color-line)] bg-white/30">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
-            <div className="story-chip w-fit">
-              <span className="section-kicker !tracking-[0.28em]">Donggeuri</span>
-            </div>
+            <span className="eyebrow">Donggeuri</span>
             <CardTitle className="text-2xl sm:text-[2rem]">{props.title}</CardTitle>
             {props.description ? <CardDescription>{props.description}</CardDescription> : null}
           </div>
@@ -50,7 +48,7 @@ export const Button = UIButton;
 
 export function ErrorMessage(props: { message: string | null }) {
   return props.message ? (
-    <div className="rounded-[24px] border border-rose-200/80 bg-[linear-gradient(135deg,rgba(255,241,242,0.98),rgba(255,247,237,0.96))] px-4 py-3 text-sm font-medium text-rose-700 shadow-sm">
+    <div className="rounded-[1.6rem] border border-rose-200/80 bg-[linear-gradient(135deg,rgba(255,241,242,0.98),rgba(255,248,240,0.96))] px-4 py-3 text-sm font-medium text-rose-700 shadow-sm">
       {props.message}
     </div>
   ) : null;
@@ -60,7 +58,7 @@ export function LoadingPanel(props: { message: string }) {
   return (
     <div className="mx-auto w-full max-w-3xl">
       <ShellCard title="Loading" description={props.message}>
-        <div className="rounded-[28px] border border-black/5 bg-white/65 px-5 py-8 text-sm text-[var(--color-soft-ink)]">
+        <div className="rounded-[1.7rem] border border-[var(--color-line)] bg-white/65 px-5 py-8 text-sm text-[var(--color-soft-ink)]">
           Preparing the reading surface. Please wait a moment.
         </div>
       </ShellCard>
