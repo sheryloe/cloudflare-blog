@@ -7,6 +7,13 @@ import type { AppEnv, WorkerBindings } from "../types";
 const SESSION_COOKIE_NAME = "donggeuri_admin_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
+export class ConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConfigurationError";
+  }
+}
+
 interface SessionPayload {
   email: string;
   exp: number;
@@ -44,6 +51,34 @@ async function sign(value: string, secret: string) {
   const key = await importHmacKey(secret);
   const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
   return encodeBase64Url(String.fromCharCode(...new Uint8Array(signature)));
+}
+
+function requireJwtSecret(secret: string | undefined) {
+  const normalized = secret?.trim();
+
+  if (!normalized) {
+    throw new ConfigurationError("JWT_SECRET must be configured before admin login is enabled.");
+  }
+
+  return normalized;
+}
+
+function normalizePasswordHash(value: string | undefined) {
+  const normalized = value?.trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (/^sha256:[0-9a-f]{64}$/i.test(normalized)) {
+    return normalized.slice("sha256:".length).toLowerCase();
+  }
+
+  if (/^[0-9a-f]{64}$/i.test(normalized)) {
+    return normalized.toLowerCase();
+  }
+
+  return null;
 }
 
 async function createSessionToken(email: string, secret: string) {
@@ -87,6 +122,8 @@ export async function verifyAdminCredentials(
   credentials: LoginInput,
   env: WorkerBindings,
 ): Promise<boolean> {
+  requireJwtSecret(env.JWT_SECRET);
+
   if (!env.ADMIN_EMAIL || !env.ADMIN_PASSWORD_HASH) {
     return false;
   }
@@ -96,8 +133,8 @@ export async function verifyAdminCredentials(
   }
 
   const candidate = await sha256Hex(credentials.password);
-  const stored = env.ADMIN_PASSWORD_HASH.trim();
-  return stored === candidate || stored === `sha256:${candidate}` || stored === credentials.password;
+  const stored = normalizePasswordHash(env.ADMIN_PASSWORD_HASH);
+  return stored === candidate;
 }
 
 export async function getAdminSession(c: Context<AppEnv>): Promise<AdminSession> {
@@ -128,9 +165,11 @@ export async function getAdminSession(c: Context<AppEnv>): Promise<AdminSession>
 }
 
 export async function createAdminSession(c: Context<AppEnv>, email: string) {
-  const token = await createSessionToken(email, c.env.JWT_SECRET);
+  const token = await createSessionToken(email, requireJwtSecret(c.env.JWT_SECRET));
   const secure = new URL(c.req.url).protocol === "https:";
 
+  // This is a host-only, same-site session cookie intended for deployments
+  // under the same eTLD+1 such as blog.example.com, admin.example.com, and api.example.com.
   setCookie(c, SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "Lax",

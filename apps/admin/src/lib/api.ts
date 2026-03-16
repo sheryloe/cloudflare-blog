@@ -12,7 +12,21 @@ import type {
   UpdatePostInput,
 } from "@donggeuri/shared";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
+function resolveApiBaseUrl() {
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim();
+
+  if (configured) {
+    return configured.replace(/\/$/, "");
+  }
+
+  if (import.meta.env.DEV) {
+    return "http://127.0.0.1:8787";
+  }
+
+  throw new Error("VITE_API_BASE_URL must be configured for the admin app.");
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 export class ApiError extends Error {
   constructor(

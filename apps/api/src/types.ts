@@ -1,6 +1,8 @@
 export interface WorkerBindings {
   DB: D1Database;
   ASSETS: R2Bucket;
+  PUBLIC_APP_ORIGIN: string;
+  ADMIN_APP_ORIGIN: string;
   R2_PUBLIC_BASE_URL: string;
   ADMIN_EMAIL: string;
   ADMIN_PASSWORD_HASH: string;
