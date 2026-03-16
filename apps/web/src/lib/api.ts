@@ -1,13 +1,64 @@
-import type { ApiResponse, Category, Post, PostSummary } from "@donggeuri/shared";
+import type {
+  AdminSession,
+  ApiResponse,
+  Category,
+  CategoryFeed,
+  CreatePostInput,
+  LoginInput,
+  MediaAsset,
+  Post,
+  PostSummary,
+  Tag,
+  TagFeed,
+  TaxonomyInput,
+  UpdatePostInput,
+} from "@donggeuri/shared";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
 
-async function request<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`);
-  const payload = (await response.json()) as ApiResponse<T>;
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code?: string,
+  ) {
+    super(message);
+  }
+}
 
-  if (!payload.success) {
-    throw new Error(payload.error.message);
+async function request<T>(
+  path: string,
+  init: RequestInit & { json?: unknown } = {},
+): Promise<T> {
+  const headers = new Headers(init.headers);
+  let body = init.body;
+
+  if (init.json !== undefined) {
+    headers.set("Content-Type", "application/json");
+    body = JSON.stringify(init.json);
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers,
+    body,
+    credentials: "include",
+  });
+
+  let payload: ApiResponse<T> | null = null;
+
+  try {
+    payload = (await response.json()) as ApiResponse<T>;
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok || !payload?.success) {
+    throw new ApiError(
+      payload && !payload.success ? payload.error.message : "Request failed.",
+      response.status,
+      payload && !payload.success ? payload.error.code : undefined,
+    );
   }
 
   return payload.data;
@@ -23,4 +74,127 @@ export function getPost(slug: string) {
 
 export function listCategories() {
   return request<Category[]>("/api/public/categories");
+}
+
+export function getCategoryFeed(slug: string) {
+  return request<CategoryFeed>(`/api/public/categories/${slug}/posts`);
+}
+
+export function getTagFeed(slug: string) {
+  return request<TagFeed>(`/api/public/tags/${slug}/posts`);
+}
+
+export function getSession() {
+  return request<AdminSession>("/api/admin/session");
+}
+
+export function login(credentials: LoginInput) {
+  return request<AdminSession>("/api/admin/login", {
+    method: "POST",
+    json: credentials,
+  });
+}
+
+export function logout() {
+  return request<{ loggedOut: true }>("/api/admin/logout", {
+    method: "POST",
+  });
+}
+
+export function listAdminPosts() {
+  return request<PostSummary[]>("/api/admin/posts");
+}
+
+export function getAdminPost(id: string) {
+  return request<Post>(`/api/admin/posts/${id}`);
+}
+
+export function createAdminPost(input: CreatePostInput) {
+  return request<Post>("/api/admin/posts", {
+    method: "POST",
+    json: input,
+  });
+}
+
+export function updateAdminPost(id: string, input: UpdatePostInput) {
+  return request<Post>(`/api/admin/posts/${id}`, {
+    method: "PUT",
+    json: input,
+  });
+}
+
+export function deleteAdminPost(id: string) {
+  return request<{ id: string; deleted: boolean }>(`/api/admin/posts/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export function listAdminCategories() {
+  return request<Category[]>("/api/admin/categories");
+}
+
+export function createAdminCategory(input: TaxonomyInput) {
+  return request<Category>("/api/admin/categories", {
+    method: "POST",
+    json: input,
+  });
+}
+
+export function updateAdminCategory(id: string, input: Partial<TaxonomyInput>) {
+  return request<Category>(`/api/admin/categories/${id}`, {
+    method: "PUT",
+    json: input,
+  });
+}
+
+export function deleteAdminCategory(id: string) {
+  return request<{ id: string; deleted: boolean }>(`/api/admin/categories/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export function listAdminTags() {
+  return request<Tag[]>("/api/admin/tags");
+}
+
+export function createAdminTag(input: TaxonomyInput) {
+  return request<Tag>("/api/admin/tags", {
+    method: "POST",
+    json: input,
+  });
+}
+
+export function updateAdminTag(id: string, input: Partial<TaxonomyInput>) {
+  return request<Tag>(`/api/admin/tags/${id}`, {
+    method: "PUT",
+    json: input,
+  });
+}
+
+export function deleteAdminTag(id: string) {
+  return request<{ id: string; deleted: boolean }>(`/api/admin/tags/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export function listMediaAssets() {
+  return request<MediaAsset[]>("/api/admin/media");
+}
+
+export function uploadMediaAsset(input: { file: File; postSlug?: string; altText?: string }) {
+  const formData = new FormData();
+  formData.set("file", input.file);
+
+  if (input.postSlug) {
+    formData.set("postSlug", input.postSlug);
+  }
+
+  if (input.altText) {
+    formData.set("altText", input.altText);
+  }
+
+  return request<MediaAsset>("/api/admin/media", {
+    method: "POST",
+    body: formData,
+  });
 }

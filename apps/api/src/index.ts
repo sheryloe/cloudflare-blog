@@ -11,7 +11,8 @@ const app = new Hono<AppEnv>();
 app.use(
   "/api/*",
   cors({
-    origin: "*",
+    origin: (origin) => origin || "http://localhost:5173",
+    credentials: true,
     allowHeaders: ["Authorization", "Content-Type"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   }),

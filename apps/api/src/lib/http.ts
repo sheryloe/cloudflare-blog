@@ -2,6 +2,7 @@ import type { ApiFailure, ApiSuccess } from "@donggeuri/shared";
 import type { Context, Next } from "hono";
 import { z } from "zod";
 
+import { getAdminSession } from "./auth";
 import type { AppEnv } from "../types";
 
 export function ok<T>(c: Context<AppEnv>, data: T, status = 200) {
@@ -49,12 +50,10 @@ export async function parseJson<T>(
 }
 
 export async function requireAdmin(c: Context<AppEnv>, next: Next) {
-  const authorization = c.req.header("Authorization");
-  const token = authorization?.replace(/^Bearer\s+/i, "").trim();
+  const session = await getAdminSession(c);
 
-  // Placeholder bootstrap auth until a dedicated login flow is added.
-  if (!token || token !== c.env.JWT_SECRET) {
-    return fail(c, 401, "UNAUTHORIZED", "Missing or invalid admin token.");
+  if (!session.authenticated) {
+    return fail(c, 401, "UNAUTHORIZED", "Missing or invalid admin session.");
   }
 
   await next();

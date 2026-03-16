@@ -44,6 +44,10 @@ pre {
   width: min(1080px, calc(100% - 2rem));
 }
 
+.page-shell--auth {
+  width: min(620px, calc(100% - 2rem));
+}
+
 .masthead {
   display: flex;
   justify-content: space-between;
@@ -127,6 +131,10 @@ pre {
   color: #435060;
 }
 
+.shell-copy--inverse {
+  color: rgba(237, 245, 242, 0.8);
+}
+
 .route-grid {
   display: flex;
   flex-wrap: wrap;
@@ -174,6 +182,200 @@ pre {
   white-space: pre-wrap;
 }
 
+.detail-grid,
+.field-grid,
+.stats-grid,
+.checkbox-grid,
+.media-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.detail-grid,
+.stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin-top: 1rem;
+}
+
+.field-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.form-grid,
+.editor-list,
+.admin-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field span {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 0.8rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(31, 38, 48, 0.14);
+  background: rgba(255, 255, 255, 0.95);
+  color: inherit;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.actions-row,
+.nav-block,
+.status-stack,
+.admin-list__actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nav-block {
+  justify-content: end;
+}
+
+.button {
+  border: 0;
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  font: inherit;
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.button--primary {
+  background: #204f87;
+  color: #fff;
+}
+
+.button--ghost {
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+}
+
+.button--danger {
+  background: #8e2c2c;
+  color: #fff;
+}
+
+.text-link {
+  color: #204f87;
+  font-weight: 700;
+}
+
+.error-text {
+  margin: 0;
+  color: #8e2c2c;
+  font-weight: 700;
+}
+
+.empty-state {
+  padding: 1rem;
+  border-radius: 16px;
+  background: rgba(245, 248, 252, 0.9);
+  color: #435060;
+}
+
+.meta-line {
+  margin: 0.25rem 0 0;
+  color: #5a6675;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.status-pill--draft {
+  background: #ffefc7;
+  color: #7a5200;
+}
+
+.status-pill--published {
+  background: #d5f5e3;
+  color: #0f6842;
+}
+
+.status-pill--archived {
+  background: #e6e8ec;
+  color: #4d5967;
+}
+
+.stat-box,
+.media-grid li,
+.editor-list li,
+.admin-list li {
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(245, 248, 252, 0.9);
+}
+
+.stat-box {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.stat-box strong {
+  font-size: 1.75rem;
+}
+
+.media-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.editor-list,
+.admin-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.checkbox-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.checkbox-pill {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.8rem 0.95rem;
+  border-radius: 14px;
+  background: rgba(245, 248, 252, 0.9);
+}
+
+.auth-panel {
+  margin-top: 4rem;
+}
+
 @media (max-width: 900px) {
   .masthead,
   .content-grid {
@@ -183,5 +385,12 @@ pre {
   .masthead {
     align-items: start;
     flex-direction: column;
+  }
+
+  .field-grid--two,
+  .field-grid--three,
+  .detail-grid,
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }

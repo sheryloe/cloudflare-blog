@@ -25,6 +25,7 @@ export interface Series {
 export interface MediaAsset {
   id: string;
   path: string;
+  url: string;
   mimeType: string;
   size: number;
   altText?: string | null;
@@ -66,6 +67,36 @@ export interface CreatePostInput {
 }
 
 export type UpdatePostInput = Partial<CreatePostInput>;
+
+export interface TaxonomyInput {
+  name: string;
+  slug?: string;
+  description?: string | null;
+}
+
+export interface SessionUser {
+  email: string;
+}
+
+export interface AdminSession {
+  authenticated: boolean;
+  user: SessionUser | null;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface CategoryFeed {
+  category: Category;
+  posts: PostSummary[];
+}
+
+export interface TagFeed {
+  tag: Tag;
+  posts: PostSummary[];
+}
 
 export interface ApiSuccess<T> {
   success: true;
