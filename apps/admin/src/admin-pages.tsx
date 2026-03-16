@@ -110,9 +110,9 @@ function buildPostInput(form: PostFormState): CreatePostInput {
 
 function StatCard(props: { label: string; value: number }) {
   return (
-    <div className="rounded-[28px] border border-black/5 bg-white/70 p-5 shadow-sm">
+    <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(244,247,251,0.8))] p-5 shadow-[0_18px_60px_rgba(19,32,51,0.08)]">
       <p className="section-kicker">Overview</p>
-      <div className="mt-4 text-4xl font-semibold tracking-tight">{props.value}</div>
+      <div className="mt-4 text-4xl font-semibold tracking-tight text-[var(--color-ink)]">{props.value}</div>
       <p className="mt-2 text-sm text-[var(--color-soft-ink)]">{props.label}</p>
     </div>
   );
@@ -155,7 +155,7 @@ export function DashboardPage() {
         {posts.length ? (
           <div className="grid gap-4">
             {posts.slice(0, 6).map((post) => (
-              <div key={post.id} className="rounded-[24px] border border-black/5 bg-white/65 p-5">
+              <div key={post.id} className="rounded-[24px] border border-white/70 bg-white/72 p-5 shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
@@ -226,7 +226,7 @@ export function PostsPage() {
       {posts.length ? (
         <div className="grid gap-4">
           {posts.map((post) => (
-            <div key={post.id} className="rounded-[24px] border border-black/5 bg-white/65 p-5">
+            <div key={post.id} className="rounded-[24px] border border-white/70 bg-white/74 p-5 shadow-sm">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-2">
@@ -262,9 +262,9 @@ export function PostsPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-[24px] bg-[var(--color-paper-muted)] px-5 py-8 text-[var(--color-soft-ink)]">
-          No posts yet. Create the first one from this screen.
-        </div>
+          <div className="rounded-[24px] bg-[var(--color-paper-muted)] px-5 py-8 text-[var(--color-soft-ink)]">
+            No posts yet. Create the first one from this screen.
+          </div>
       )}
     </ShellCard>
   );
@@ -527,7 +527,7 @@ export function MediaPage() {
         {assets.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {assets.map((asset) => (
-              <div key={asset.id} className="rounded-[24px] border border-black/5 bg-white/65 p-5">
+              <div key={asset.id} className="rounded-[24px] border border-white/70 bg-white/74 p-5 shadow-sm">
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <Badge variant="default">{asset.mimeType}</Badge>
@@ -617,7 +617,7 @@ export function CategoriesPage() {
       <ShellCard title="Existing categories" description="Inline edit and cleanup.">
         <div className="grid gap-4">
           {items.map((item) => (
-            <div key={item.id} className="rounded-[24px] border border-black/5 bg-white/65 p-5">
+            <div key={item.id} className="rounded-[24px] border border-white/70 bg-white/74 p-5 shadow-sm">
               <div className="grid gap-4 xl:grid-cols-3">
                 <label className="block">
                   <span className="field-label">Name</span>
@@ -707,7 +707,7 @@ export function TagsPage() {
       <ShellCard title="Existing tags" description="Inline edit and cleanup.">
         <div className="grid gap-4">
           {items.map((item) => (
-            <div key={item.id} className="rounded-[24px] border border-black/5 bg-white/65 p-5">
+            <div key={item.id} className="rounded-[24px] border border-white/70 bg-white/74 p-5 shadow-sm">
               <div className="grid gap-4 xl:grid-cols-2">
                 <label className="block">
                   <span className="field-label">Name</span>

@@ -2,35 +2,35 @@
 @import "tw-animate-css";
 
 :root {
-  --color-paper: #f7f1e7;
-  --color-paper-strong: #efe4d4;
-  --color-paper-muted: #fbf8f2;
-  --color-ink: #1f2937;
-  --color-soft-ink: #5b6675;
-  --color-muted: #efe8dc;
-  --color-muted-strong: #e4dac9;
-  --color-accent: #b65e32;
-  --color-accent-soft: #d88a63;
-  --color-border: rgba(31, 41, 55, 0.1);
-  --background: var(--color-paper);
+  --color-paper: #eef1f6;
+  --color-paper-strong: #dde4ef;
+  --color-paper-muted: #f6f8fb;
+  --color-ink: #132033;
+  --color-soft-ink: #5f6e82;
+  --color-muted: #dfe6f0;
+  --color-muted-strong: #ccd7e6;
+  --color-accent: #d97843;
+  --color-accent-soft: #f4b279;
+  --color-border: rgba(19, 32, 51, 0.1);
+  --background: #eef1f6;
   --foreground: var(--color-ink);
-  --card: rgba(255, 255, 255, 0.78);
+  --card: rgba(255, 255, 255, 0.84);
   --card-foreground: var(--color-ink);
   --popover: #fff;
   --popover-foreground: var(--color-ink);
-  --primary: var(--color-ink);
-  --primary-foreground: var(--color-paper);
+  --primary: #162338;
+  --primary-foreground: #f4f7fb;
   --secondary: var(--color-muted);
   --secondary-foreground: var(--color-ink);
   --muted: var(--color-muted);
   --muted-foreground: var(--color-soft-ink);
   --accent: var(--color-accent);
   --accent-foreground: #fff;
-  --destructive: #a23933;
+  --destructive: #b23a3a;
   --border: var(--color-border);
   --input: var(--color-border);
-  --ring: rgba(182, 94, 50, 0.32);
-  --radius: 1.5rem;
+  --ring: rgba(217, 120, 67, 0.32);
+  --radius: 1.4rem;
 }
 
 @theme inline {
@@ -52,8 +52,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 7px);
+  --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 8px);
 }
@@ -68,12 +68,25 @@
   }
 
   body {
-    @apply min-h-screen bg-[var(--color-paper)] text-[var(--color-ink)] antialiased;
+    @apply min-h-screen bg-[var(--background)] text-[var(--foreground)] antialiased;
     font-family: "Avenir Next", "Segoe UI", sans-serif;
     background-image:
-      radial-gradient(circle at top left, rgba(182, 94, 50, 0.16), transparent 26%),
-      radial-gradient(circle at top right, rgba(74, 124, 89, 0.12), transparent 20%),
-      linear-gradient(180deg, #fbf6ef 0%, #f5ecdf 100%);
+      radial-gradient(circle at 10% 0%, rgba(217, 120, 67, 0.18), transparent 20%),
+      radial-gradient(circle at 90% 5%, rgba(34, 68, 115, 0.22), transparent 26%),
+      linear-gradient(180deg, #edf2f7 0%, #e5ebf4 100%);
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      linear-gradient(rgba(19, 32, 51, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(19, 32, 51, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 90%);
   }
 
   h1,
@@ -90,100 +103,33 @@
   }
 
   ::selection {
-    background: rgba(182, 94, 50, 0.2);
+    background: rgba(217, 120, 67, 0.24);
   }
 }
 
 @layer components {
   .app-shell {
-    @apply mx-auto w-full max-w-[1240px] px-4 pb-16 pt-6 sm:px-6 lg:px-8;
-  }
-
-  .editorial-grid {
-    @apply grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_20rem];
+    @apply relative mx-auto w-full max-w-[1440px] px-4 pb-16 pt-6 sm:px-6 lg:px-8;
   }
 
   .glass-panel {
-    @apply rounded-[32px] border border-black/5 bg-white/65 shadow-[0_18px_80px_rgba(15,23,42,0.07)] backdrop-blur;
+    @apply rounded-[30px] border border-white/70 bg-white/78 shadow-[0_26px_100px_rgba(19,32,51,0.09)] backdrop-blur-xl;
   }
 
   .section-kicker {
     @apply text-[11px] font-semibold uppercase tracking-[0.35em] text-[var(--color-accent)];
   }
 
-  .article-content {
-    @apply text-[1.02rem] leading-8 text-[var(--color-ink)];
+  .admin-panel {
+    @apply rounded-[30px] border border-white/70 bg-white/82 shadow-[0_24px_100px_rgba(19,32,51,0.08)] backdrop-blur-xl;
   }
 
-  .article-content > * + * {
-    @apply mt-6;
+  .admin-rail-link {
+    @apply flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-[var(--color-soft-ink)] transition hover:border-black/6 hover:bg-white hover:text-[var(--color-ink)];
   }
 
-  .article-content h1,
-  .article-content h2,
-  .article-content h3 {
-    @apply mt-10 text-balance font-semibold tracking-tight text-[var(--color-ink)];
-  }
-
-  .article-content h1 {
-    @apply text-4xl;
-  }
-
-  .article-content h2 {
-    @apply text-3xl;
-  }
-
-  .article-content h3 {
-    @apply text-2xl;
-  }
-
-  .article-content p {
-    @apply text-pretty text-[var(--color-ink)];
-  }
-
-  .article-content ul {
-    @apply list-disc pl-6;
-  }
-
-  .article-content ol {
-    @apply list-decimal pl-6;
-  }
-
-  .article-content li {
-    @apply mt-2;
-  }
-
-  .article-content blockquote {
-    @apply rounded-r-[28px] border-l-4 border-[var(--color-accent)] bg-white/60 px-6 py-4 italic text-[var(--color-soft-ink)];
-  }
-
-  .article-content a {
-    @apply font-medium text-[var(--color-accent)] underline decoration-[var(--color-accent)]/30 underline-offset-4;
-  }
-
-  .article-content pre {
-    @apply overflow-x-auto rounded-[28px] bg-slate-950 p-5 text-sm leading-7 text-slate-100;
-  }
-
-  .article-content code {
-    font-family: "IBM Plex Mono", "Cascadia Code", monospace;
-  }
-
-  .article-content :not(pre) > code {
-    @apply rounded bg-[var(--color-paper-strong)] px-1.5 py-1 text-[0.9em] text-[var(--color-accent)];
-  }
-
-  .article-content table {
-    @apply w-full overflow-hidden rounded-[24px] border border-black/10 bg-white/70 text-left text-sm;
-  }
-
-  .article-content thead {
-    @apply bg-black/[0.04];
-  }
-
-  .article-content th,
-  .article-content td {
-    @apply border-b border-black/5 px-4 py-3 align-top;
+  .admin-rail-link[data-active="true"] {
+    @apply border-black/8 bg-[linear-gradient(135deg,rgba(22,35,56,0.95),rgba(41,67,104,0.92))] text-white shadow-[0_16px_48px_rgba(22,35,56,0.28)];
   }
 
   .field-label {
