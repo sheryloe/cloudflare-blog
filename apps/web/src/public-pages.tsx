@@ -19,8 +19,8 @@ import {
 import { cn } from "./lib/utils";
 import { ErrorMessage } from "./ui";
 
-const RSS_FEED_URL = getWorkerResourceUrl("/rss.xml");
-const SITEMAP_URL = getWorkerResourceUrl("/sitemap.xml");
+const RSS_FEED_URL = "/rss.xml";
+const SITEMAP_URL = "/sitemap.xml";
 const SITE_TITLE = "Donggri 기록들";
 const SITE_TAGLINE = "잠시 머물며 마음은 쉬고, 필요한 지식 한 줄은 조용히 가져가는 기록 서가입니다.";
 const SITE_DESCRIPTION =
