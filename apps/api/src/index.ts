@@ -4,7 +4,7 @@ import type { Context, Next } from "hono";
 import { ConfigurationError } from "./lib/auth";
 import { fail, ok } from "./lib/http";
 import { renderRssXml, renderSitemapXml } from "./lib/public-site";
-import { listCategories, listPublishedPosts, listTags } from "./lib/posts";
+import { listCategories, listPublishedPosts } from "./lib/posts";
 import publicRoutes from "./routes/public";
 import adminRoutes from "./routes/admin";
 import type { AppEnv } from "./types";
@@ -131,17 +131,12 @@ app.get("/rss.xml", async (c) => {
 });
 
 app.get("/sitemap.xml", async (c) => {
-  const [posts, categories, tags] = await Promise.all([
-    listPublishedPosts(c.env.DB),
-    listCategories(c.env.DB),
-    listTags(c.env.DB),
-  ]);
+  const [posts, categories] = await Promise.all([listPublishedPosts(c.env.DB), listCategories(c.env.DB)]);
 
   const xml = renderSitemapXml({
     siteUrl: c.env.PUBLIC_APP_ORIGIN,
     posts,
     categories,
-    tags,
   });
 
   return new Response(xml, {

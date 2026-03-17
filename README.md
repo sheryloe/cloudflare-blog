@@ -46,8 +46,29 @@ pnpm dev:admin
 
 - 로컬 설정 예제는 `apps/api/.dev.vars.example`, `apps/web/.env.example`, `apps/admin/.env.example`를 참고합니다.
 
+## 공개 블로그 분석/SEO 설정
+
+- 공개 블로그는 Cloudflare Pages advanced mode `_worker.js`로 초기 HTML head를 라우트별로 주입합니다.
+- Pages 프로젝트 `donggeuri-blog`에는 런타임 변수 `API_ORIGIN`을 `https://donggeuri-api.wlflqna.workers.dev`로 설정하는 것을 권장합니다.
+- 공개 웹 빌드 환경 변수 `VITE_GA_MEASUREMENT_ID`에 `G-XXXXXXXXXX` 형식의 GA4 측정 ID를 넣으면 Google tag가 활성화됩니다.
+- 측정 ID가 비어 있으면 Google Analytics 코드는 로드되지 않습니다.
+- `/search`와 `/tag/*`는 `noindex,follow`로 유지하고, sitemap에는 홈, 소개, 카테고리, 글 상세만 포함합니다.
+- `robots.txt`, `rss.xml`, `sitemap.xml`은 `https://donggeuri-blog.pages.dev` 기준으로 노출됩니다.
+
+## 검색 노출 운영 체크리스트
+
+- Google Analytics
+  - GA4 속성과 웹 데이터 스트림을 만든 뒤 `VITE_GA_MEASUREMENT_ID`를 Pages build env에 등록합니다.
+  - 배포 후 Tag Assistant와 GA4 Realtime에서 `page_view`를 확인합니다.
+- Cloudflare Web Analytics
+  - `Workers & Pages > donggeuri-blog > Metrics > Web Analytics`에서 활성화합니다.
+- Google Search Console
+  - `https://donggeuri-blog.pages.dev/sitemap.xml`을 제출하고 홈, 대표 카테고리, 대표 글 URL을 검사합니다.
+- Naver Search Advisor
+  - 사이트맵 제출 후 주요 카테고리와 글 상세 URL을 검사합니다.
+
 ## 다음 단계
 
 - 예약 발행, 초안 상태, 미리보기 추가
 - 관리자 감사 로그와 역할 분리 강화
-- RSS/SEO/검색 기능을 공개 블로그 측에 완성
+- 대표 글 큐레이션, OG 이미지 고도화, 검색 결과 품질 개선

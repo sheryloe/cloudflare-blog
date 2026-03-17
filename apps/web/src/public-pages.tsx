@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, Outlet, useLocation, useParams, useSearchParams } from "react-router-dom";
 
+import { AnalyticsTracker } from "./components/analytics-tracker";
 import { extractTocHeadings, MarkdownContent } from "./components/markdown-content";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -16,17 +17,28 @@ import {
   listPosts,
   searchPosts,
 } from "./lib/api";
+import {
+  buildExcerpt,
+  createBlogPostingStructuredData,
+  createCollectionPageStructuredData,
+  createWebPageStructuredData,
+  createWebSiteStructuredData,
+  type PageMetadataInput,
+  useSeoMetadata,
+} from "./lib/seo";
 import { cn } from "./lib/utils";
 import { ErrorMessage } from "./ui";
 
 const RSS_FEED_URL = "/rss.xml";
 const SITEMAP_URL = "/sitemap.xml";
 const SITE_TITLE = "Donggri 기록들";
+const SITE_ALT_NAME = "Donggri Blog";
+const SITE_AUTHOR = "동그리";
 const SITE_TAGLINE = "잠시 머물며 마음은 쉬고, 필요한 지식 한 줄은 조용히 가져가는 기록 서가입니다.";
-const SITE_DESCRIPTION =
-  "메인에는 새 글이 먼저 놓이고, 오른쪽에는 정보의 기록, 세상의 기록, 시장의 기록, 기술의 기록, 동그리의 기록이 트리로 정리됩니다. 문화와 축제, 역사와 이슈, 주식과 크립토, 신기술, 개발, 여행, 일상을 한 번에 파악할 수 있게 분류한 기록 블로그입니다.";
+const SITE_DESCRIPTION = "문화와 축제, 역사와 이슈, 주식과 크립토, 신기술, 개발, 여행과 일상을 차분하게 기록하는 블로그입니다.";
 const ABOUT_DESCRIPTION =
-  "문화, 축제, 행사, 역사, 다큐, 미스터리, 주식, 크립토, 신기술, 개발, 여행, 일상을 차분한 문장으로 엮어두는 Donggri 기록들의 공개 소개 페이지입니다.";
+  "Donggri 기록들은 문화와 축제, 역사와 이슈, 주식과 크립토, 신기술, 개발, 여행과 일상을 한곳에 차분히 모아두는 공개 블로그입니다.";
+const DEFAULT_OG_IMAGE_PATH = "/og-default.svg";
 
 const publicLinks = [
   { href: "/", label: "홈", external: false },
@@ -145,35 +157,8 @@ function buildCategoryTree(categories: Category[]) {
   }));
 }
 
-function upsertMetaTag(selector: string, attributes: Record<string, string>, content: string) {
-  if (typeof document === "undefined") {
-    return;
-  }
-
-  let element = document.head.querySelector(selector) as HTMLMetaElement | null;
-
-  if (!element) {
-    element = document.createElement("meta");
-    Object.entries(attributes).forEach(([key, value]) => element?.setAttribute(key, value));
-    document.head.appendChild(element);
-  }
-
-  element.setAttribute("content", content);
-}
-
-function usePageMetadata(title: string, description: string) {
-  useEffect(() => {
-    if (typeof document === "undefined") {
-      return;
-    }
-
-    document.title = title;
-    upsertMetaTag('meta[name="description"]', { name: "description" }, description);
-    upsertMetaTag('meta[property="og:title"]', { property: "og:title" }, title);
-    upsertMetaTag('meta[property="og:description"]', { property: "og:description" }, description);
-    upsertMetaTag('meta[name="twitter:title"]', { name: "twitter:title" }, title);
-    upsertMetaTag('meta[name="twitter:description"]', { name: "twitter:description" }, description);
-  }, [title, description]);
+function usePageMetadata(metadata: PageMetadataInput) {
+  useSeoMetadata(metadata);
 }
 
 function NavigationLink(props: { href: string; label: string; external?: boolean }) {
@@ -333,6 +318,30 @@ function ArchiveHeader(props: { eyebrow: string; title: string; description: str
   );
 }
 
+function BreadcrumbTrail(props: { items: Array<{ label: string; href?: string }> }) {
+  return (
+    <nav className="breadcrumb-trail" aria-label="breadcrumb">
+      {props.items.map((item, index) => {
+        const key = `${item.label}-${index}`;
+        const isLast = index === props.items.length - 1;
+
+        return (
+          <span key={key} className="breadcrumb-trail__item">
+            {item.href && !isLast ? (
+              <Link to={item.href} className="breadcrumb-trail__link">
+                {item.label}
+              </Link>
+            ) : (
+              <span className="breadcrumb-trail__current">{item.label}</span>
+            )}
+            {!isLast ? <span className="breadcrumb-trail__divider">/</span> : null}
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
 function VideoEmbed(props: { title: string; youtubeUrl: string }) {
   const videoId = parseYoutubeVideo(props.youtubeUrl);
 
@@ -393,6 +402,7 @@ export function PublicLayout() {
 
   return (
     <div className="simple-shell">
+      <AnalyticsTracker />
       <header className="simple-header">
         <div className="simple-header__brand">
           <Link to="/" className="simple-brand">
@@ -418,7 +428,18 @@ export function PublicLayout() {
 }
 
 export function HomePage() {
-  usePageMetadata(SITE_TITLE, SITE_DESCRIPTION);
+  usePageMetadata({
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    path: "/",
+    image: DEFAULT_OG_IMAGE_PATH,
+    structuredData: createWebSiteStructuredData({
+      name: SITE_TITLE,
+      alternateName: SITE_ALT_NAME,
+      description: SITE_DESCRIPTION,
+      path: "/",
+    }),
+  });
 
   const [posts, setPosts] = useState<PostSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -496,14 +517,47 @@ export function HomePage() {
 export function PostPage() {
   const { slug = "" } = useParams();
   const [post, setPost] = useState<Post | null>(null);
+  const [relatedPosts, setRelatedPosts] = useState<PostSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [activeHeading, setActiveHeading] = useState("");
   const [progress, setProgress] = useState(0);
+  const postPath = `/post/${slug}`;
+  const postDescription = post?.excerpt ?? post?.subtitle ?? (post ? buildExcerpt(post.content) : SITE_DESCRIPTION);
+  const postBreadcrumbs = [
+    { name: SITE_TITLE, path: "/" },
+    ...(post?.category?.slug && post?.category?.name
+      ? [{ name: post.category.name, path: `/category/${post.category.slug}` }]
+      : []),
+    { name: post?.title ?? "글", path: postPath },
+  ];
 
-  usePageMetadata(
-    post ? `${post.title} | ${SITE_TITLE}` : `글 불러오는 중 | ${SITE_TITLE}`,
-    post?.excerpt ?? post?.subtitle ?? SITE_DESCRIPTION,
-  );
+  usePageMetadata({
+    title: post ? `${post.title} | ${SITE_TITLE}` : `글 불러오는 중 | ${SITE_TITLE}`,
+    description: postDescription,
+    path: postPath,
+    robots: error ? "noindex,follow" : "index,follow",
+    ogType: post ? "article" : "website",
+    image: post?.coverImage ?? DEFAULT_OG_IMAGE_PATH,
+    structuredData: post
+      ? createBlogPostingStructuredData({
+          title: post.title,
+          description: postDescription,
+          path: postPath,
+          image: post.coverImage ?? DEFAULT_OG_IMAGE_PATH,
+          publishedAt: post.publishedAt ?? post.createdAt,
+          updatedAt: post.updatedAt,
+          categoryName: post.category?.name,
+          tags: post.tags.map((tag) => tag.name),
+          breadcrumbs: postBreadcrumbs,
+          authorName: SITE_AUTHOR,
+        })
+      : createWebPageStructuredData({
+          name: `글 불러오는 중 | ${SITE_TITLE}`,
+          description: SITE_DESCRIPTION,
+          path: postPath,
+          breadcrumbs: postBreadcrumbs,
+        }),
+  });
 
   useEffect(() => {
     void getPost(slug)
@@ -516,6 +570,19 @@ export function PostPage() {
         setError(reason.message);
       });
   }, [slug]);
+
+  useEffect(() => {
+    if (!post?.category?.slug) {
+      setRelatedPosts([]);
+      return;
+    }
+
+    void getCategoryFeed(post.category.slug)
+      .then((value) => {
+        setRelatedPosts(value.posts.filter((item) => item.slug !== post.slug).slice(0, 3));
+      })
+      .catch(() => setRelatedPosts([]));
+  }, [post?.category?.slug, post?.slug]);
 
   useEffect(() => {
     if (!post) {
@@ -567,9 +634,19 @@ export function PostPage() {
 
       <article className="article-page">
         <header className="article-page__header">
+          <BreadcrumbTrail
+            items={[
+              { label: SITE_TITLE, href: "/" },
+              ...(post?.category?.slug && post?.category?.name
+                ? [{ label: post.category.name, href: `/category/${post.category.slug}` }]
+                : []),
+              { label: post?.title ?? "글" },
+            ]}
+          />
           <div className="post-row__meta">
-            <CategoryChip category={post?.category} />
-            <span>{formatDate(post?.publishedAt ?? post?.updatedAt)}</span>
+            {post?.category ? <CategoryChip category={post.category} /> : null}
+            {post?.publishedAt ? <span>발행 {formatDate(post.publishedAt)}</span> : null}
+            <span>수정 {formatDate(post?.updatedAt ?? post?.createdAt)}</span>
             <span>{post ? `${estimateReadMinutes(post.content)}분 읽기` : ""}</span>
           </div>
           <h1>{post?.title ?? "글 불러오는 중"}</h1>
@@ -606,6 +683,20 @@ export function PostPage() {
           </div>
           {post ? <TableOfContents content={post.content} activeHeading={activeHeading} /> : null}
         </div>
+
+        {relatedPosts.length ? (
+          <section className="list-section article-related">
+            <div className="list-section__header">
+              <h2>{post?.category?.name ? `${post.category.name}에서 더 읽기` : "함께 읽기 좋은 글"}</h2>
+              <p>같은 기록의 갈래에서 이어 읽기 좋은 글을 함께 둡니다.</p>
+            </div>
+            <div className="post-list">
+              {relatedPosts.map((item) => (
+                <PostListItem key={item.id} post={item} />
+              ))}
+            </div>
+          </section>
+        ) : null}
       </article>
     </div>
   );
@@ -615,11 +706,24 @@ export function CategoryArchivePage() {
   const { slug = "" } = useParams();
   const [feed, setFeed] = useState<CategoryFeed | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const categoryPath = `/category/${slug}`;
+  const categoryDescription = feed?.category.description ?? "선택한 기록의 갈래에 속한 공개 글을 모아둔 페이지입니다.";
 
-  usePageMetadata(
-    feed ? `${feed.category.name} | ${SITE_TITLE}` : `기록의 갈래 | ${SITE_TITLE}`,
-    feed?.category.description ?? "주제별로 묶인 글을 모아보는 페이지입니다.",
-  );
+  usePageMetadata({
+    title: feed ? `${feed.category.name} | ${SITE_TITLE}` : `기록의 갈래 | ${SITE_TITLE}`,
+    description: categoryDescription,
+    path: categoryPath,
+    image: DEFAULT_OG_IMAGE_PATH,
+    structuredData: createCollectionPageStructuredData({
+      name: feed ? `${feed.category.name} | ${SITE_TITLE}` : `기록의 갈래 | ${SITE_TITLE}`,
+      description: categoryDescription,
+      path: categoryPath,
+      breadcrumbs: [
+        { name: SITE_TITLE, path: "/" },
+        { name: feed?.category.name ?? "기록의 갈래", path: categoryPath },
+      ],
+    }),
+  });
 
   useEffect(() => {
     void getCategoryFeed(slug)
@@ -636,6 +740,12 @@ export function CategoryArchivePage() {
   return (
     <div className="simple-page">
       <ErrorMessage message={error} />
+      <BreadcrumbTrail
+        items={[
+          { label: SITE_TITLE, href: "/" },
+          { label: feed?.category.name ?? "기록의 갈래" },
+        ]}
+      />
       <ArchiveHeader
         eyebrow="기록의 갈래"
         title={feed?.category.name ?? "기록의 갈래"}
@@ -658,11 +768,28 @@ export function TagArchivePage() {
   const { slug = "" } = useParams();
   const [feed, setFeed] = useState<TagFeed | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const tagPath = `/tag/${slug}`;
+  const tagTitle = feed ? `#${feed.tag.name} | ${SITE_TITLE}` : `태그 | ${SITE_TITLE}`;
+  const tagDescription = feed
+    ? `#${feed.tag.name}로 묶인 공개 글 목록입니다.`
+    : "선택한 태그에 연결된 공개 글을 모아보는 페이지입니다.";
 
-  usePageMetadata(
-    feed ? `#${feed.tag.name} | ${SITE_TITLE}` : `태그 | ${SITE_TITLE}`,
-    feed ? `#${feed.tag.name}로 묶인 글 목록입니다.` : "선택한 태그에 연결된 글을 모아보는 페이지입니다.",
-  );
+  usePageMetadata({
+    title: tagTitle,
+    description: tagDescription,
+    path: tagPath,
+    robots: "noindex,follow",
+    image: DEFAULT_OG_IMAGE_PATH,
+    structuredData: createWebPageStructuredData({
+      name: tagTitle,
+      description: tagDescription,
+      path: tagPath,
+      breadcrumbs: [
+        { name: SITE_TITLE, path: "/" },
+        { name: feed ? `#${feed.tag.name}` : "태그", path: tagPath },
+      ],
+    }),
+  });
 
   useEffect(() => {
     void getTagFeed(slug)
@@ -705,10 +832,22 @@ export function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  usePageMetadata(
-    currentQuery ? `"${currentQuery}" 검색 | ${SITE_TITLE}` : `검색 | ${SITE_TITLE}`,
-    "행사, 문화, 이슈, 미스터리, 주식, 크립토, AI 같은 키워드로 공개 글의 제목, 요약, 본문, 태그를 검색할 수 있습니다.",
-  );
+  usePageMetadata({
+    title: currentQuery ? `"${currentQuery}" 검색 | ${SITE_TITLE}` : `검색 | ${SITE_TITLE}`,
+    description: "행사, 문화, 이슈, 미스터리, 주식, 크립토, AI 같은 키워드로 공개 글의 제목, 요약, 본문, 태그를 검색할 수 있습니다.",
+    path: "/search",
+    robots: "noindex,follow",
+    image: DEFAULT_OG_IMAGE_PATH,
+    structuredData: createWebPageStructuredData({
+      name: currentQuery ? `"${currentQuery}" 검색 | ${SITE_TITLE}` : `검색 | ${SITE_TITLE}`,
+      description: "행사, 문화, 이슈, 미스터리, 주식, 크립토, AI 같은 키워드로 공개 글의 제목, 요약, 본문, 태그를 검색할 수 있습니다.",
+      path: "/search",
+      breadcrumbs: [
+        { name: SITE_TITLE, path: "/" },
+        { name: "검색", path: "/search" },
+      ],
+    }),
+  });
 
   useEffect(() => {
     setDraft(currentQuery);
@@ -795,7 +934,22 @@ export function SearchPage() {
 }
 
 export function AboutPage() {
-  usePageMetadata(`소개 | ${SITE_TITLE}`, ABOUT_DESCRIPTION);
+  usePageMetadata({
+    title: `소개 | ${SITE_TITLE}`,
+    description: ABOUT_DESCRIPTION,
+    path: "/about",
+    image: DEFAULT_OG_IMAGE_PATH,
+    structuredData: createWebPageStructuredData({
+      type: "AboutPage",
+      name: `소개 | ${SITE_TITLE}`,
+      description: ABOUT_DESCRIPTION,
+      path: "/about",
+      breadcrumbs: [
+        { name: SITE_TITLE, path: "/" },
+        { name: "소개", path: "/about" },
+      ],
+    }),
+  });
 
   return (
     <div className="simple-page">
@@ -855,7 +1009,22 @@ export function AboutPage() {
 export function WorkerResourceRedirectPage(props: { title: string; resourcePath: string }) {
   const resourceUrl = getWorkerResourceUrl(props.resourcePath);
 
-  usePageMetadata(`${props.title} | ${SITE_TITLE}`, `${props.title}은 Worker에서 직접 제공하는 리소스입니다.`);
+  usePageMetadata({
+    title: `${props.title} | ${SITE_TITLE}`,
+    description: `${props.title}은 Worker에서 직접 제공하는 리소스입니다.`,
+    path: props.resourcePath,
+    robots: "noindex,follow",
+    image: DEFAULT_OG_IMAGE_PATH,
+    structuredData: createWebPageStructuredData({
+      name: `${props.title} | ${SITE_TITLE}`,
+      description: `${props.title}은 Worker에서 직접 제공하는 리소스입니다.`,
+      path: props.resourcePath,
+      breadcrumbs: [
+        { name: SITE_TITLE, path: "/" },
+        { name: props.title, path: props.resourcePath },
+      ],
+    }),
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {

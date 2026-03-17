@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Donggri 기록들">
+  <defs>
+    <linearGradient id="paper" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbf6ee" />
+      <stop offset="100%" stop-color="#ead9c2" />
+    </linearGradient>
+    <radialGradient id="ink" cx="18%" cy="16%" r="90%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" rx="40" fill="url(#paper)" />
+  <rect x="40" y="40" width="1120" height="550" rx="32" fill="#fffaf2" stroke="#d6c7b0" stroke-width="2" />
+  <rect x="86" y="88" width="220" height="54" rx="27" fill="#171d28" />
+  <text x="196" y="123" text-anchor="middle" fill="#f8f6f1" font-size="20" font-family="'IBM Plex Mono', monospace" letter-spacing="5">ARCHIVE</text>
+  <circle cx="960" cy="168" r="176" fill="url(#ink)" />
+  <text x="96" y="252" fill="#171d28" font-size="72" font-weight="700" font-family="'Pretendard Variable', 'Pretendard', sans-serif">Donggri 기록들</text>
+  <text x="96" y="334" fill="#59606d" font-size="33" font-family="'Pretendard Variable', 'Pretendard', sans-serif">조용히 머물며 지식과 여운을 함께 가져가는 기록 서가</text>
+  <text x="96" y="418" fill="#8e472e" font-size="28" font-family="'Pretendard Variable', 'Pretendard', sans-serif">문화 · 역사 · 시장 · 기술 · 여행 · 일상</text>
+  <rect x="96" y="470" width="420" height="2" fill="#cbbca4" />
+  <text x="96" y="530" fill="#59606d" font-size="24" font-family="'Pretendard Variable', 'Pretendard', sans-serif">donggeuri-blog.pages.dev</text>
+</svg>

@@ -1,4 +1,4 @@
-import type { Category, PostSummary, Tag } from "@donggeuri/shared";
+import type { Category, PostSummary } from "@donggeuri/shared";
 
 function escapeXml(value: string) {
   return value
@@ -93,18 +93,15 @@ function renderSitemapEntry(loc: string, lastmod?: string | null) {
 export function renderSitemapXml(args: {
   siteUrl: string;
   categories: Category[];
-  tags: Tag[];
   posts: PostSummary[];
 }) {
   const siteUrl = ensureSiteOrigin(args.siteUrl);
   const entries = [
     renderSitemapEntry(toAbsoluteUrl(siteUrl, "/")),
     renderSitemapEntry(toAbsoluteUrl(siteUrl, "/about")),
-    renderSitemapEntry(toAbsoluteUrl(siteUrl, "/search")),
     ...args.categories.map((category) =>
       renderSitemapEntry(toAbsoluteUrl(siteUrl, `/category/${category.slug}`), category.updatedAt ?? category.createdAt),
     ),
-    ...args.tags.map((tag) => renderSitemapEntry(toAbsoluteUrl(siteUrl, `/tag/${tag.slug}`))),
     ...args.posts.map((post) => renderSitemapEntry(toAbsoluteUrl(siteUrl, `/post/${post.slug}`), toLastModified(post))),
   ].join("\n");
 
