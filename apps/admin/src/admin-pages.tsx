@@ -52,6 +52,13 @@ type PostFormState = {
   publishedAt: string;
 };
 
+type CategoryDraft = {
+  name: string;
+  slug: string;
+  description: string;
+  parentId: string;
+};
+
 const EMPTY_POST_FORM: PostFormState = {
   title: "",
   subtitle: "",
@@ -108,6 +115,78 @@ function buildPostInput(form: PostFormState): CreatePostInput {
   };
 }
 
+function sortCategoriesForTree(categories: Category[]) {
+  const items = [...categories].sort((left, right) => left.name.localeCompare(right.name, "ko"));
+  const byId = new Map(items.map((category) => [category.id, category]));
+  const children = new Map<string, Category[]>();
+  const roots: Category[] = [];
+
+  items.forEach((category) => {
+    if (category.parentId && byId.has(category.parentId)) {
+      children.set(category.parentId, [...(children.get(category.parentId) ?? []), category]);
+      return;
+    }
+
+    roots.push(category);
+  });
+
+  const ordered: Category[] = [];
+
+  const visit = (category: Category) => {
+    ordered.push(category);
+    for (const child of children.get(category.id) ?? []) {
+      visit(child);
+    }
+  };
+
+  roots.forEach(visit);
+  return ordered;
+}
+
+function buildCategoryLabel(category: Category, categories: Category[]) {
+  if (!category.parentId) {
+    return category.name;
+  }
+
+  const parent = categories.find((item) => item.id === category.parentId);
+  return parent ? `${parent.name} / ${category.name}` : category.name;
+}
+
+function listTopLevelCategories(categories: Category[], excludedId?: string) {
+  return sortCategoriesForTree(categories).filter((category) => !category.parentId && category.id !== excludedId);
+}
+
+function listPostAssignableCategories(categories: Category[]) {
+  const parentIds = new Set(
+    categories.map((category) => category.parentId).filter((value): value is string => Boolean(value)),
+  );
+
+  return sortCategoriesForTree(categories).filter((category) => !parentIds.has(category.id));
+}
+
+const SUGGESTED_ARCHIVE_TREE = [
+  {
+    parent: "정보의 기록",
+    children: ["머물고 싶은 장면", "계절이 들썩이는 날", "사람 모이는 현장"],
+  },
+  {
+    parent: "세상의 기록",
+    children: ["시간 너머의 풍경", "오늘의 파장", "설명되지 않은 이야기"],
+  },
+  {
+    parent: "시장의 기록",
+    children: ["숫자 뒤의 흐름", "변동성의 한가운데"],
+  },
+  {
+    parent: "기술의 기록",
+    children: ["막 나온 기술의 기척", "화면 너머의 리뷰", "문장과 관점의 해부"],
+  },
+  {
+    parent: "동그리의 기록",
+    children: ["오래 남는 생각", "천천한 하루", "낯선 길의 기록"],
+  },
+] as const;
+
 function StatCard(props: { label: string; value: number }) {
   return (
     <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(244,247,251,0.8))] p-5 shadow-[0_18px_60px_rgba(19,32,51,0.08)]">
@@ -146,7 +225,7 @@ export function DashboardPage() {
           <StatCard label="초안" value={posts.filter((post) => post.status === "draft").length} />
           <StatCard label="공개 글" value={posts.filter((post) => post.status === "published").length} />
           <StatCard label="미디어" value={media.length} />
-          <StatCard label="카테고리" value={categories.length} />
+          <StatCard label="갈래" value={categories.length} />
           <StatCard label="태그" value={tags.length} />
         </div>
       </ShellCard>
@@ -300,6 +379,8 @@ export function PostEditorPage() {
       .finally(() => setLoading(false));
   }, [id, isEdit]);
 
+  const selectableCategories = listPostAssignableCategories(categories);
+
   const handleTagToggle = (tagId: string) => {
     setForm((current) => ({
       ...current,
@@ -398,12 +479,12 @@ export function PostEditorPage() {
                 <Input type="datetime-local" value={form.publishedAt} onChange={(event) => setForm((current) => ({ ...current, publishedAt: event.target.value }))} />
               </label>
               <label className="block">
-                <span className="field-label">카테고리</span>
+                <span className="field-label">세부 갈래</span>
                 <Select value={form.categoryId} onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}>
-                  <option value="">카테고리 없음</option>
-                  {categories.map((category) => (
+                  <option value="">갈래 없음</option>
+                  {selectableCategories.map((category) => (
                     <option key={category.id} value={category.id}>
-                      {category.name}
+                      {buildCategoryLabel(category, categories)}
                     </option>
                   ))}
                 </Select>
@@ -573,8 +654,8 @@ export function MediaPage() {
 
 export function CategoriesPage() {
   const [items, setItems] = useState<Category[]>([]);
-  const [drafts, setDrafts] = useState<Record<string, { name: string; slug: string; description: string }>>({});
-  const [createForm, setCreateForm] = useState({ name: "", slug: "", description: "" });
+  const [drafts, setDrafts] = useState<Record<string, CategoryDraft>>({});
+  const [createForm, setCreateForm] = useState<CategoryDraft>({ name: "", slug: "", description: "", parentId: "" });
   const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
@@ -585,7 +666,12 @@ export function CategoriesPage() {
         Object.fromEntries(
           categories.map((category) => [
             category.id,
-            { name: category.name, slug: category.slug, description: category.description ?? "" },
+            {
+              name: category.name,
+              slug: category.slug,
+              description: category.description ?? "",
+              parentId: category.parentId ?? "",
+            },
           ]),
         ),
       );
@@ -599,71 +685,150 @@ export function CategoriesPage() {
     void refresh();
   }, []);
 
+  const orderedItems = sortCategoriesForTree(items);
+  const parentOptions = listTopLevelCategories(items);
+  const childParentIds = new Set(
+    items.map((item) => item.parentId).filter((value): value is string => Boolean(value)),
+  );
+
   return (
     <>
-      <ShellCard title="Create category" description="Manage topic shelves for the public archive.">
+      <ShellCard title="추천 기록의 갈래" description="공개 블로그 사이드바와 소개 페이지에 맞춰 둔 기본 트리입니다. 같은 이름으로 만들면 공개 화면과 바로 이어집니다.">
+        <div className="grid gap-3 lg:grid-cols-2">
+          {SUGGESTED_ARCHIVE_TREE.map((group) => (
+            <div key={group.parent} className="rounded-[24px] border border-white/70 bg-white/70 p-4 shadow-sm">
+              <p className="section-kicker">상위 갈래</p>
+              <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--color-ink)]">{group.parent}</h3>
+              <p className="mt-3 text-sm leading-6 text-[var(--color-soft-ink)]">{group.children.join(" · ")}</p>
+            </div>
+          ))}
+        </div>
+      </ShellCard>
+
+      <ShellCard title="갈래 만들기" description="상위 갈래와 세부 갈래를 트리로 관리합니다. 글에는 세부 갈래만 연결됩니다.">
         <form
-          className="grid gap-4 xl:grid-cols-3"
+          className="grid gap-4 xl:grid-cols-4"
           onSubmit={(event) => {
             event.preventDefault();
             void createAdminCategory(createForm)
               .then(refresh)
-              .then(() => setCreateForm({ name: "", slug: "", description: "" }))
+              .then(() => setCreateForm({ name: "", slug: "", description: "", parentId: "" }))
               .catch((reason: Error) => setError(reason.message));
           }}
         >
           <label className="block">
-            <span className="field-label">Name</span>
+            <span className="field-label">이름</span>
             <Input value={createForm.name} onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))} required />
           </label>
           <label className="block">
-            <span className="field-label">Slug</span>
+            <span className="field-label">슬러그</span>
             <Input value={createForm.slug} onChange={(event) => setCreateForm((current) => ({ ...current, slug: event.target.value }))} />
           </label>
           <label className="block">
-            <span className="field-label">Description</span>
+            <span className="field-label">설명</span>
             <Input value={createForm.description} onChange={(event) => setCreateForm((current) => ({ ...current, description: event.target.value }))} />
           </label>
-          <div className="xl:col-span-3">
+          <label className="block">
+            <span className="field-label">상위 갈래</span>
+            <Select value={createForm.parentId} onChange={(event) => setCreateForm((current) => ({ ...current, parentId: event.target.value }))}>
+              <option value="">최상위 갈래</option>
+              {parentOptions.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <div className="xl:col-span-4">
             <ErrorMessage message={error} />
           </div>
-          <div className="xl:col-span-3">
-            <Button type="submit">Create category</Button>
+          <div className="xl:col-span-4">
+            <Button type="submit">갈래 만들기</Button>
           </div>
         </form>
       </ShellCard>
 
-      <ShellCard title="Existing categories" description="Inline edit and cleanup.">
+      <ShellCard title="기존 갈래" description="상위 갈래와 세부 갈래를 같은 화면에서 고치고 정리합니다.">
         <div className="grid gap-4">
-          {items.map((item) => (
-            <div key={item.id} className="rounded-[24px] border border-white/70 bg-white/74 p-5 shadow-sm">
-              <div className="grid gap-4 xl:grid-cols-3">
-                <label className="block">
-                  <span className="field-label">Name</span>
-                  <Input value={drafts[item.id]?.name ?? ""} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...current[item.id], name: event.target.value } }))} />
-                </label>
-                <label className="block">
-                  <span className="field-label">Slug</span>
-                  <Input value={drafts[item.id]?.slug ?? ""} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...current[item.id], slug: event.target.value } }))} />
-                </label>
-                <label className="block">
-                  <span className="field-label">Description</span>
-                  <Input value={drafts[item.id]?.description ?? ""} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...current[item.id], description: event.target.value } }))} />
-                </label>
+          {orderedItems.map((item) => {
+            const isBranch = childParentIds.has(item.id);
+            const draft = drafts[item.id];
+            const availableParents = listTopLevelCategories(items, item.id);
+            const parentName = item.parentId ? items.find((category) => category.id === item.parentId)?.name : null;
+
+            return (
+              <div key={item.id} className="rounded-[24px] border border-white/70 bg-white/74 p-5 shadow-sm">
+                <div className={`grid gap-4 xl:grid-cols-4 ${item.parentId ? "xl:pl-6" : ""}`}>
+                  <label className="block">
+                    <span className="field-label">이름</span>
+                    <Input value={draft?.name ?? ""} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...current[item.id], name: event.target.value } }))} />
+                  </label>
+                  <label className="block">
+                    <span className="field-label">슬러그</span>
+                    <Input value={draft?.slug ?? ""} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...current[item.id], slug: event.target.value } }))} />
+                  </label>
+                  <label className="block">
+                    <span className="field-label">설명</span>
+                    <Input value={draft?.description ?? ""} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...current[item.id], description: event.target.value } }))} />
+                  </label>
+                  <label className="block">
+                    <span className="field-label">상위 갈래</span>
+                    <Select
+                      value={draft?.parentId ?? ""}
+                      disabled={isBranch}
+                      onChange={(event) =>
+                        setDrafts((current) => ({
+                          ...current,
+                          [item.id]: { ...current[item.id], parentId: event.target.value },
+                        }))
+                      }
+                    >
+                      <option value="">최상위 갈래</option>
+                      {availableParents.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </label>
+                </div>
+                <p className="mt-3 text-xs text-[var(--color-soft-ink)]">
+                  {parentName
+                    ? `${parentName} 아래에 놓인 세부 갈래입니다.`
+                    : isBranch
+                      ? "세부 갈래를 품는 상위 갈래입니다."
+                      : "최상위 갈래입니다."}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Button
+                    type="button"
+                    variant="soft"
+                    onClick={() =>
+                      void updateAdminCategory(
+                        item.id,
+                        draft ?? {
+                          name: item.name,
+                          slug: item.slug,
+                          description: item.description ?? "",
+                          parentId: item.parentId ?? "",
+                        },
+                      )
+                        .then(refresh)
+                        .catch((reason: Error) => setError(reason.message))
+                    }
+                  >
+                    저장
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => void deleteAdminCategory(item.id).then(refresh).catch((reason: Error) => setError(reason.message))}>
+                    삭제
+                  </Button>
+                </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Button type="button" variant="soft" onClick={() => void updateAdminCategory(item.id, drafts[item.id]).then(refresh).catch((reason: Error) => setError(reason.message))}>
-                  Save
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => void deleteAdminCategory(item.id).then(refresh).catch((reason: Error) => setError(reason.message))}>
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {items.length === 0 ? (
             <div className="rounded-[24px] bg-[var(--color-paper-muted)] px-5 py-8 text-[var(--color-soft-ink)]">
-              No categories yet.
+              아직 만든 갈래가 없습니다.
             </div>
           ) : null}
         </div>

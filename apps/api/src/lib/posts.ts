@@ -56,6 +56,7 @@ function mapCategory(row: Record<string, unknown>): Category {
     slug: String(row.slug),
     name: String(row.name),
     description: row.description ? String(row.description) : null,
+    parentId: row.parent_id ? String(row.parent_id) : null,
     createdAt: row.created_at ? String(row.created_at) : undefined,
     updatedAt: row.updated_at ? String(row.updated_at) : undefined,
   };
@@ -316,9 +317,9 @@ export async function listCategories(db: D1Database) {
   const result = await db
     .prepare(
       `
-        SELECT id, slug, name, description, created_at, updated_at
+        SELECT id, slug, name, description, parent_id, created_at, updated_at
         FROM categories
-        ORDER BY name ASC
+        ORDER BY CASE WHEN parent_id IS NULL THEN 0 ELSE 1 END ASC, COALESCE(parent_id, id), name ASC
       `,
     )
     .all<Record<string, unknown>>();
@@ -344,7 +345,7 @@ export async function getCategoryFeedBySlug(db: D1Database, slug: string): Promi
   const category = await db
     .prepare(
       `
-        SELECT id, slug, name, description, created_at, updated_at
+        SELECT id, slug, name, description, parent_id, created_at, updated_at
         FROM categories
         WHERE slug = ?1
         LIMIT 1
@@ -377,7 +378,15 @@ export async function getCategoryFeedBySlug(db: D1Database, slug: string): Promi
           c.description AS category_description
         FROM posts p
         LEFT JOIN categories c ON c.id = p.category_id
-        WHERE p.category_id = ?1 AND p.status = 'published'
+        WHERE p.status = 'published'
+          AND (
+            p.category_id = ?1
+            OR p.category_id IN (
+              SELECT id
+              FROM categories
+              WHERE parent_id = ?1
+            )
+          )
         ORDER BY COALESCE(p.published_at, p.created_at) DESC
       `,
     )

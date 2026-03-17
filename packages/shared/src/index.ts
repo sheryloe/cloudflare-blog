@@ -5,6 +5,7 @@ export interface Category {
   slug: string;
   name: string;
   description?: string | null;
+  parentId?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -73,6 +74,7 @@ export interface TaxonomyInput {
   name: string;
   slug?: string;
   description?: string | null;
+  parentId?: string | null;
 }
 
 export interface SessionUser {

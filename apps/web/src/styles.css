@@ -1047,6 +1047,34 @@ html[data-theme="dark"] .article-content thead {
     @apply mt-1 block text-xs text-[var(--color-soft-ink)];
   }
 
+  .sidebar-tree {
+    @apply mt-4 grid gap-3;
+  }
+
+  .sidebar-tree__branch {
+    @apply grid gap-2;
+  }
+
+  .sidebar-tree__parent {
+    @apply inline-flex items-center justify-between rounded-[16px] bg-[var(--color-paper-muted)] px-3 py-3 text-sm font-medium text-[var(--color-ink)] hover:bg-black/[0.035];
+  }
+
+  .sidebar-tree__parent-static {
+    @apply cursor-default;
+  }
+
+  .sidebar-tree__children {
+    @apply ml-4 grid gap-2 border-l border-black/8 pl-3;
+  }
+
+  .sidebar-tree__child {
+    @apply inline-flex items-center justify-between rounded-[14px] px-3 py-2.5 text-sm text-[var(--color-soft-ink)] hover:bg-black/[0.03] hover:text-[var(--color-ink)];
+  }
+
+  .sidebar-tree__child-static {
+    @apply cursor-default;
+  }
+
   .simple-page {
     @apply flex flex-col gap-8;
   }

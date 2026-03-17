@@ -44,10 +44,11 @@ const taxonomySchema = z.object({
   name: z.string().min(1),
   slug: z.string().trim().optional(),
   description: z.string().trim().nullable().optional(),
+  parentId: z.string().trim().nullable().optional(),
 });
 const taxonomyUpdateSchema = taxonomySchema
   .partial()
-  .refine((value) => Boolean(value.name || value.slug || value.description !== undefined));
+  .refine((value) => Boolean(value.name || value.slug || value.description !== undefined || value.parentId !== undefined));
 
 const adminRoutes = new Hono<AppEnv>();
 
