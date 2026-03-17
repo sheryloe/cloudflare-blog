@@ -25,6 +25,8 @@ const SITE_TITLE = "Donggri 기록들";
 const SITE_TAGLINE = "새로 적힌 글이 먼저 놓이고, 오른쪽 기록의 갈래가 차분히 결을 더하는 기록 블로그입니다.";
 const SITE_DESCRIPTION =
   "메인에는 새 글이 먼저 놓이고, 오른쪽에는 정보의 기록, 세상의 기록, 시장의 기록, 기술의 기록, 동그리의 기록이 트리로 정리됩니다. 문화와 축제, 역사와 이슈, 주식과 크립토, 신기술, 개발, 여행, 일상을 한 번에 파악할 수 있게 분류한 기록 블로그입니다.";
+const ABOUT_DESCRIPTION =
+  "문화, 축제, 행사, 역사, 다큐, 미스터리, 주식, 크립토, 신기술, 개발, 여행, 일상을 차분한 문장으로 엮어두는 Donggri 기록들의 공개 소개 페이지입니다.";
 
 const publicLinks = [
   { href: "/", label: "홈", external: false },
@@ -73,33 +75,6 @@ const ARCHIVE_GROUPS = [
     description:
       "개발하는 일과 프로그래밍, 여행에서 본 장면, 일상에서 남긴 메모를 동그리의 시선으로 적어두는 갈래입니다. 가볍게 흘려보내기보다 차분히 남깁니다.",
     items: ["개발과 프로그래밍", "여행과 기록", "일상과 메모"],
-  },
-] as const;
-
-const EDITORIAL_VALUES = [
-  {
-    eyebrow: "구조",
-    title: "글이 먼저 보이는 구조",
-    description:
-      "첫 문단만 읽어도 핵심이 보이고, 긴 글은 소제목과 목록으로 호흡을 나눕니다. 주제가 넓어도 독자가 길을 잃지 않게 정리합니다.",
-  },
-  {
-    eyebrow: "갈래",
-    title: "기록의 갈래는 옆에서 길을 잡습니다",
-    description:
-      "공개 블로그는 기록의 갈래를 따라 천천히 훑어볼 수 있어야 합니다. 메인은 글이 주인공이고, 오른쪽은 갈래 선반이 받쳐주는 쪽이 더 자연스럽습니다.",
-  },
-  {
-    eyebrow: "가독성",
-    title: "긴 글에도 흐름이 끊기지 않는 화면",
-    description:
-      "모바일에서도 무너지지 않는 줄 길이와 간격, 목차와 요약, 적당한 이미지 사용을 기본으로 둡니다. 오래 읽어도 지치지 않는 화면을 목표로 합니다.",
-  },
-  {
-    eyebrow: "보안",
-    title: "보안은 가리기가 아니라 분리입니다",
-    description:
-      "공개 블로그에는 공개돼도 되는 것만 보여주고, 관리자 기능은 별도 주소와 인증으로 나눕니다. 보안은 F12를 막는 것이 아니라, 내려가면 안 되는 값이 애초에 가지 않게 다루는 데 있습니다.",
   },
 ] as const;
 
@@ -240,16 +215,6 @@ function ArchiveGroupCard(props: (typeof ARCHIVE_GROUPS)[number]) {
         ))}
       </div>
     </article>
-  );
-}
-
-function PrincipleCard(props: (typeof EDITORIAL_VALUES)[number]) {
-  return (
-    <section className="sidebar-box">
-      <p className="sidebar-box__eyebrow">{props.eyebrow}</p>
-      <h3 className="sidebar-box__title">{props.title}</h3>
-      <p className="sidebar-box__text">{props.description}</p>
-    </section>
   );
 }
 
@@ -830,55 +795,43 @@ export function SearchPage() {
 }
 
 export function AboutPage() {
-  usePageMetadata(`소개 | ${SITE_TITLE}`, SITE_DESCRIPTION);
+  usePageMetadata(`소개 | ${SITE_TITLE}`, ABOUT_DESCRIPTION);
 
   return (
     <div className="simple-page">
       <ArchiveHeader
         eyebrow="소개"
-        title="기록의 갈래는 보기 편하게, 이름은 바로 이해되게 정리합니다"
-        description="상위 갈래는 블로그의 큰 축을 보여주고, 하위 갈래는 문화와 공간, 역사와 문화, 개발과 프로그래밍처럼 한 번에 이해되는 이름으로 다듬었습니다."
+        title="문화와 축제, 역사와 이슈, 시장과 기술, 그리고 동그리의 일상을 한곳에 모아둡니다"
+        description="Donggri 기록들은 문화, 축제, 행사, 역사, 다큐, 미스터리, 주식, 크립토, 신기술, 개발, 여행, 일상을 차분한 문장으로 엮는 공개 블로그입니다. 가볍게 훑어도 주제가 보이고, 오래 읽으면 맥락이 남는 기록을 지향합니다."
       />
 
       <section className="featured-post">
         <div className="featured-post__body">
           <div className="post-row__meta">
-            <span className="simple-chip">메인은 최신 글</span>
-            <span className="simple-chip">오른쪽은 기록의 갈래</span>
-            <span className="simple-chip">이름은 바로 이해되게</span>
+            <span className="simple-chip">문화와 축제</span>
+            <span className="simple-chip">역사와 이슈</span>
+            <span className="simple-chip">개발과 여행</span>
           </div>
-          <h2 className="featured-post__title">읽는 사람도, 쓰는 사람도 바로 이해되는 갈래 이름으로 다시 다듬었습니다.</h2>
+          <h2 className="featured-post__title">눈길이 머무는 장면부터 오래 붙드는 이야기까지, Donggri 기록들에 차분히 모아둡니다.</h2>
           <p className="featured-post__summary">
-            {SITE_TITLE}은 상위 갈래로 큰 주제를 묶고, 하위 갈래는 문화와 공간, 역사와 문화, 주식의 흐름, 개발과 프로그래밍처럼
-            한 번에 파악되는 이름을 씁니다. 공개 화면은 글이 먼저 보이고, 갈래는 오른쪽 트리에서 차분하게 탐색하는 구성을 지향합니다.
+            이곳에는 문화와 축제, 행사와 공간, 역사와 다큐, 이슈와 미스터리, 주식과 크립토, 신기술과 개발, 여행과 일상이 함께 쌓입니다.
+            검색으로 다시 찾기 좋고, 처음 들어와도 어떤 주제를 다루는지 바로 보이도록 정리했습니다.
           </p>
-          <div className="article-page__actions">
-            <a href={RSS_FEED_URL} className="simple-inline-link">
-              RSS 보기
-              <ArrowUpRight className="h-4 w-4" />
-            </a>
-            <a href={SITEMAP_URL} className="simple-inline-link">
-              사이트맵 보기
-              <ArrowUpRight className="h-4 w-4" />
-            </a>
-          </div>
         </div>
 
         <div className="grid gap-4">
           <section className="sidebar-box">
-            <p className="sidebar-box__eyebrow">원칙</p>
-            <h3 className="sidebar-box__title">메인에서는 글, 옆에서는 갈래</h3>
+            <p className="sidebar-box__eyebrow">기록</p>
+            <h3 className="sidebar-box__title">자주 머무는 이야기</h3>
             <p className="sidebar-box__text">
-              공개 블로그는 글 읽는 흐름이 먼저고, 갈래 체계는 옆에서 받쳐줘야 합니다. 그래서 긴 갈래 설명은 소개 페이지로
-              옮기고, 메인은 글 중심으로 두었습니다.
+              문화, 축제, 행사, 역사, 다큐, 미스터리, 주식, 크립토, 신기술, 개발, 여행, 일상처럼 하루의 관심사와 오래 남는 주제를 함께 다룹니다.
             </p>
           </section>
           <section className="sidebar-box">
-            <p className="sidebar-box__eyebrow">보안</p>
-            <h3 className="sidebar-box__title">관리자 기능은 공개 화면에서 숨깁니다</h3>
+            <p className="sidebar-box__eyebrow">문장</p>
+            <h3 className="sidebar-box__title">빠르게 읽혀도, 오래 남게</h3>
             <p className="sidebar-box__text">
-              운영 도구는 별도 관리자 주소에서만 다루고, 공개 블로그에선 노출하지 않습니다. 독자 경험과 보안 감각을 함께
-              지키는 방향입니다.
+              짧게 훑어도 핵심이 잡히고, 길게 읽어도 흐름이 끊기지 않는 글을 지향합니다. 정보성 글과 기록성 글이 한 화면 안에서 자연스럽게 이어집니다.
             </p>
           </section>
         </div>
@@ -886,24 +839,12 @@ export function AboutPage() {
 
       <section className="list-section">
         <div className="list-section__header">
-          <h2>지금 제안하는 기록의 갈래</h2>
-          <p>너무 꼬이지 않으면서도, 각 주제가 무엇을 다루는지 바로 보이도록 이름을 다시 정리했습니다.</p>
+          <h2>이 블로그에서 만나는 갈래</h2>
+          <p>처음 들어와도 어떤 글을 읽게 될지 한눈에 보이도록, 큰 주제와 세부 주제를 차분하게 정리해두었습니다.</p>
         </div>
         <div className="topic-grid">
           {ARCHIVE_GROUPS.map((group) => (
             <ArchiveGroupCard key={group.eyebrow} {...group} />
-          ))}
-        </div>
-      </section>
-
-      <section className="list-section">
-        <div className="list-section__header">
-          <h2>이 블로그가 지키는 원칙</h2>
-          <p>겉모양보다 읽는 흐름, 그리고 보여도 되는 것과 숨겨야 하는 것의 경계를 분명하게 둡니다.</p>
-        </div>
-        <div className="principle-grid">
-          {EDITORIAL_VALUES.map((value) => (
-            <PrincipleCard key={value.title} {...value} />
           ))}
         </div>
       </section>
