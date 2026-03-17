@@ -22,7 +22,7 @@ import { ErrorMessage } from "./ui";
 const RSS_FEED_URL = getWorkerResourceUrl("/rss.xml");
 const SITEMAP_URL = getWorkerResourceUrl("/sitemap.xml");
 const SITE_TITLE = "Donggri 기록들";
-const SITE_TAGLINE = "메인은 새 글이 먼저 보이고, 오른쪽 기록의 갈래가 주제를 한눈에 잡아주는 차분한 기록 블로그입니다.";
+const SITE_TAGLINE = "새로 적힌 글이 먼저 놓이고, 오른쪽 기록의 갈래가 차분히 결을 더하는 기록 블로그입니다.";
 const SITE_DESCRIPTION =
   "메인에는 새 글이 먼저 놓이고, 오른쪽에는 정보의 기록, 세상의 기록, 시장의 기록, 기술의 기록, 동그리의 기록이 트리로 정리됩니다. 문화와 축제, 역사와 이슈, 주식과 크립토, 신기술, 개발, 여행, 일상을 한 번에 파악할 수 있게 분류한 기록 블로그입니다.";
 
@@ -330,9 +330,9 @@ function Sidebar(props: { categories: Category[] }) {
     <aside className="simple-sidebar">
       <section className="sidebar-box">
         <p className="sidebar-box__eyebrow">{SITE_TITLE}</p>
-        <h2 className="sidebar-box__title">메인은 글이, 오른쪽은 기록의 갈래가 조용히 길을 잡는 구조를 지향합니다.</h2>
+        <h2 className="sidebar-box__title">하루의 장면과 오래 남는 문장을 차분히 모아두는 곳입니다.</h2>
         <p className="sidebar-box__text">
-          공개 블로그에서는 최신 글과 목록이 먼저 보이고, 갈래는 오른쪽 선반에서 차분하게 따라 들어갈 수 있도록 정리합니다.
+          빠르게 스쳐 지나가는 이야기보다 한 번 더 들여다보고 싶은 기록을 남깁니다. 새 글은 앞에 놓고, 기록의 갈래는 옆에서 조용히 흐름을 이어 붙입니다.
         </p>
       </section>
 
@@ -475,8 +475,8 @@ export function HomePage() {
 
       <ArchiveHeader
         eyebrow="블로그"
-        title="새 글이 먼저 보이고, 기록의 갈래는 옆에서 천천히 길을 잡습니다"
-        description="메인은 결국 글이 주인공이므로 최신 글과 전체 목록을 앞에 두고, 갈래 트리는 오른쪽 선반에서 차분하게 탐색할 수 있게 정리했습니다."
+        title="새로 적힌 글이 먼저 놓이고, 기록의 갈래는 옆에서 조용히 결을 더합니다"
+        description="메인에는 막 올라온 글과 오래 남을 문장이 먼저 자리하고, 오른쪽 갈래는 읽는 흐름을 해치지 않게 천천히 방향을 붙잡아 둡니다."
       />
 
       {featured ? (
