@@ -3,7 +3,7 @@
 DonggriArchive 기반 구조를 템플릿으로 정리한 공개 저장소입니다.  
 개인/운영 정보는 제거했고, 템플릿 공유와 GitHub Pages 소개 페이지에 바로 사용할 수 있습니다.
 
-- Repository: [https://github.com/sheryloe/cloudflare-blog](https://github.com/sheryloe/cloudflare-blog)
+- 실제 운영페이지 : https://dongriarchive.com/ko/
 
 ---
 
