@@ -1,0 +1,12 @@
+---
+import { tagPath } from "../lib/content";
+
+const { lang, tags } = Astro.props as { lang: "ko" | "en"; tags: string[] };
+---
+<div class="tag-list">
+  {tags.map((tag) => (
+    <a href={tagPath(lang, tag)} class="tag-list__item">
+      #{tag}
+    </a>
+  ))}
+</div>

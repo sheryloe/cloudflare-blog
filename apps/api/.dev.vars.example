@@ -4,3 +4,7 @@ R2_PUBLIC_BASE_URL=http://127.0.0.1:8787/assets
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD_HASH=sha256:replace_with_sha256_hex
 JWT_SECRET=replace_with_a_long_random_secret
+AUTOMATION_ALLOWED_IPS=127.0.0.1,::1
+AUTOMATION_API_KEY=change-me-in-cloudflare-or-dev-vars
+BLOGGERGENT_M2M_TOKEN=change-me-for-bloggergent
+BLOGGERGENT_ALLOWED_ORIGIN=http://localhost:7001

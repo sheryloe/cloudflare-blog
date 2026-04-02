@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Dongri Archive cover 06">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2e8de"/>
+      <stop offset="1" stop-color="#d8c3b0"/>
+    </linearGradient>
+    <radialGradient id="blob" cx="0.18" cy="0.2" r="0.9">
+      <stop offset="0" stop-color="#6a584d" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#6a584d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <rect width="1600" height="1000" fill="url(#blob)"/>
+  <g fill="#6a584d" fill-opacity="0.12">
+    <circle cx="210" cy="180" r="180"/>
+    <circle cx="1330" cy="220" r="250"/>
+    <circle cx="1220" cy="760" r="300"/>
+  </g>
+  <g stroke="#6a584d" stroke-opacity="0.20" stroke-width="2" fill="none">
+    <path d="M60 760C340 680 560 860 830 780C1120 700 1280 830 1540 760"/>
+    <path d="M80 860C360 790 590 940 860 860C1130 780 1310 910 1520 840"/>
+  </g>
+  <text x="120" y="860" fill="#6a584d" fill-opacity="0.55" font-size="72" font-family="'Newsreader', Georgia, serif" letter-spacing="1">Dongri Archive</text>
+</svg>

@@ -1,104 +1,122 @@
-<!DOCTYPE html>
-<html lang="ko" data-theme="corporate">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cloudflare Blog Template | Public / Admin / API를 분리한 Cloudflare 블로그 템플릿</title>
-  <meta name="description" content="Cloudflare Pages, Workers, D1, R2로 공개 블로그와 관리자 앱을 분리한 재사용 가능한 템플릿 저장소">
-  <meta name="theme-color" content="#f48120">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Cloudflare Blog Template | Cloudflare 블로그 템플릿">
-  <meta property="og:description" content="Public site, admin app, API를 분리해 운영하는 Cloudflare 블로그 템플릿">
-  <meta property="og:url" content="https://github.com/sheryloe/cloudflare-blog">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.24/dist/full.min.css" rel="stylesheet" type="text/css">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    body {
-      font-family: "IBM Plex Sans KR", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(244, 129, 32, 0.14), transparent 24rem),
-        radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.12), transparent 24rem),
-        linear-gradient(180deg, #fffaf5 0%, #fff1df 52%, #fde6cc 100%);
-      color: #2a1408;
-    }
-    .display-font { font-family: "Space Grotesk", sans-serif; }
-    .paper {
-      background: rgba(255, 250, 245, 0.84);
-      border: 1px solid rgba(120, 63, 18, 0.12);
-      box-shadow: 0 28px 60px rgba(120, 72, 24, 0.12);
-      backdrop-filter: blur(16px);
-    }
-  </style>
-</head>
-<body>
-  <header class="sticky top-0 z-50 border-b border-amber-900/10 bg-white/70 backdrop-blur">
-    <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
-      <a href="#top" class="flex items-center gap-3">
-        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-lg shadow-orange-500/20">
-          <span class="display-font text-lg font-bold">CF</span>
-        </div>
-        <div>
-          <p class="display-font text-lg font-bold">Cloudflare Blog Template</p>
-          <p class="text-xs uppercase tracking-[0.24em] text-amber-900/60">Reusable public skeleton</p>
-        </div>
-      </a>
-      <nav class="hidden gap-3 md:flex">
-        <a class="btn btn-ghost btn-sm" href="#stack">구조</a>
-        <a class="btn btn-ghost btn-sm" href="#rules">배포 규칙</a>
-        <a class="btn btn-ghost btn-sm" href="#todo">TODO</a>
-        <a class="btn btn-warning btn-sm text-white" href="https://github.com/sheryloe/cloudflare-blog">GitHub</a>
-      </nav>
-    </div>
-  </header>
+﻿<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloudflare Blog Template Docs</title>
+    <meta
+      name="description"
+      content="DonggriArchive Cloudflare Blog Template 문서 허브"
+    />
+    <style>
+      :root {
+        --bg: #eef4fc;
+        --surface: #ffffff;
+        --line: #d7e4f5;
+        --text: #132036;
+        --muted: #4f6180;
+        --accent: #0e63d7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+        background:
+          radial-gradient(circle at 0 0, #ddecff, transparent 35%),
+          radial-gradient(circle at 100% 0, #def8ff, transparent 35%),
+          var(--bg);
+        color: var(--text);
+      }
+      .container {
+        width: min(1040px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 36px 0 48px;
+      }
+      .hero {
+        background: linear-gradient(130deg, #0f63d6, #0b8aa1);
+        color: #fff;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 18px;
+      }
+      .hero h1 {
+        margin: 0 0 8px;
+      }
+      .hero p {
+        margin: 0;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.9);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      .card h2 {
+        margin: 0 0 8px;
+        font-size: 19px;
+      }
+      .card p {
+        margin: 0 0 12px;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+      a.button {
+        display: inline-block;
+        text-decoration: none;
+        font-weight: 700;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        background: var(--accent);
+        color: #fff;
+      }
+      @media (max-width: 860px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <section class="hero">
+        <h1>Cloudflare Blog Template Docs</h1>
+        <p>
+          공개 템플릿 문서 허브입니다. API, 환경 변수, 퍼블릭 페이지 동작을 빠르게 확인할 수 있습니다.
+        </p>
+      </section>
 
-  <main id="top" class="mx-auto flex max-w-7xl flex-col gap-10 px-6 pb-24 pt-10">
-    <section class="paper rounded-[2rem] p-8 lg:p-10">
-      <span class="badge badge-warning badge-outline">Cloudflare-native platform</span>
-      <h1 class="display-font mt-5 max-w-4xl text-4xl font-black leading-tight md:text-6xl">
-        Public / Admin / API를 나눠서
-        운영하는 Cloudflare 블로그 플랫폼
-      </h1>
-      <p class="mt-6 max-w-3xl text-lg leading-8 text-amber-950/80">
-        이 저장소는 공개 블로그 프런트, 관리자 앱, Worker API를 각각 분리한
-        재사용용 public template입니다. 실제 도메인과 인증 태그, 분석 설정은
-        별도 private repo에서 채워 넣는 흐름을 기본으로 둡니다.
-      </p>
-      <div class="mt-7 flex flex-wrap gap-3">
-        <a class="btn btn-warning text-white" href="https://github.com/sheryloe/cloudflare-blog">저장소 보기</a>
-      </div>
-    </section>
-
-    <section id="stack" class="grid gap-5 lg:grid-cols-4">
-      <article class="paper rounded-[1.75rem] p-6"><i data-lucide="globe" class="h-8 w-8 text-orange-500"></i><h2 class="display-font mt-4 text-2xl font-bold">Public Web</h2><p class="mt-3 text-amber-950/75">Cloudflare Pages로 배포되는 공개 블로그입니다.</p></article>
-      <article class="paper rounded-[1.75rem] p-6"><i data-lucide="layout-dashboard" class="h-8 w-8 text-orange-500"></i><h2 class="display-font mt-4 text-2xl font-bold">Admin</h2><p class="mt-3 text-amber-950/75">콘텐츠 관리와 세션 기반 접근을 담당하는 관리자 앱입니다.</p></article>
-      <article class="paper rounded-[1.75rem] p-6"><i data-lucide="cloud-cog" class="h-8 w-8 text-orange-500"></i><h2 class="display-font mt-4 text-2xl font-bold">API Worker</h2><p class="mt-3 text-amber-950/75">D1, R2, 인증 경계를 담당하는 Worker API입니다.</p></article>
-      <article class="paper rounded-[1.75rem] p-6"><i data-lucide="database" class="h-8 w-8 text-orange-500"></i><h2 class="display-font mt-4 text-2xl font-bold">Data Layer</h2><p class="mt-3 text-amber-950/75">D1은 글 메타데이터, R2는 미디어 저장 역할을 맡습니다.</p></article>
-    </section>
-
-    <section id="rules" class="paper rounded-[2rem] p-8 lg:p-10">
-      <div class="max-w-3xl">
-        <span class="badge badge-outline badge-warning">Deployment rules</span>
-        <h2 class="display-font mt-4 text-3xl font-black md:text-4xl">이 프로젝트는 배포 경계를 명확히 가져가는 편이 좋습니다</h2>
-      </div>
-      <div class="mt-8 grid gap-4 lg:grid-cols-3">
-        <div class="rounded-2xl bg-white/75 p-5 ring-1 ring-amber-900/10"><p class="font-semibold text-orange-600">Public vs Private</p><p class="mt-2">template repo에는 엔진과 UI 뼈대만 남기고, 실제 운영값은 private repo로 분리합니다.</p></div>
-        <div class="rounded-2xl bg-white/75 p-5 ring-1 ring-amber-900/10"><p class="font-semibold text-orange-600">Allowlist CORS</p><p class="mt-2">Worker는 허용 목록 기반 CORS로 경계를 분명히 해야 합니다.</p></div>
-        <div class="rounded-2xl bg-white/75 p-5 ring-1 ring-amber-900/10"><p class="font-semibold text-orange-600">Separate deploy units</p><p class="mt-2">Public/Admin/API를 각기 다른 배포 단위로 유지하는 현재 구조가 장점입니다.</p></div>
-      </div>
-    </section>
-
-    <section id="todo" class="grid gap-5 lg:grid-cols-3">
-      <article class="paper rounded-[1.75rem] p-6"><span class="badge badge-info">CMS</span><h2 class="display-font mt-4 text-2xl font-bold">초안 / 예약 발행</h2><p class="mt-3 text-amber-950/75">서비스 단계로 가려면 초안 상태와 예약 발행 흐름이 필요합니다.</p></article>
-      <article class="paper rounded-[1.75rem] p-6"><span class="badge badge-success">Security</span><h2 class="display-font mt-4 text-2xl font-bold">감사 로그와 역할 분리</h2><p class="mt-3 text-amber-950/75">관리자 액션 이력과 권한 분리는 운영 안정성을 크게 높입니다.</p></article>
-      <article class="paper rounded-[1.75rem] p-6"><span class="badge badge-warning">Public Site</span><h2 class="display-font mt-4 text-2xl font-bold">SEO / RSS 마감</h2><p class="mt-3 text-amber-950/75">검색과 피드까지 완성되면 공개 블로그 플랫폼으로서 가치가 선명해집니다.</p></article>
-    </section>
-  </main>
-
-  <script>lucide.createIcons();</script>
-</body>
+      <section class="grid">
+        <article class="card">
+          <h2>API Reference</h2>
+          <p>Public/Admin/Blogger/Integrations 전체 엔드포인트 문서.</p>
+          <a class="button" href="./worker_api.md">Open</a>
+        </article>
+        <article class="card">
+          <h2>API Command Examples</h2>
+          <p>cURL 기반 실전 검증 명령 템플릿.</p>
+          <a class="button" href="./api-command-examples.html">Open</a>
+        </article>
+        <article class="card">
+          <h2>Environment Variables</h2>
+          <p>앱/Worker 실행에 필요한 환경 변수 목록.</p>
+          <a class="button" href="./env_variables.md">Open</a>
+        </article>
+        <article class="card">
+          <h2>Public Web Pages</h2>
+          <p>공개 웹 주요 페이지/구조 설명.</p>
+          <a class="button" href="./public_web_pages.md">Open</a>
+        </article>
+      </section>
+    </main>
+  </body>
 </html>

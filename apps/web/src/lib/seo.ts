@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 
-const DEFAULT_SITE_ORIGIN = "https://blog.example.com";
+const DEFAULT_SITE_ORIGIN = "https://example.com";
 const DEFAULT_IMAGE_PATH = "/og-default.svg";
-const DEFAULT_SITE_NAME = "Cloudflare Blog";
+const DEFAULT_SITE_NAME = "동그리의 기록소";
 
 type StructuredDataNode = Record<string, unknown>;
 
@@ -21,6 +21,15 @@ export interface PageMetadataInput {
   structuredData?: StructuredDataNode | StructuredDataNode[];
 }
 
+function resolveSiteName(title: string) {
+  const parts = title
+    .split("|")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return parts.at(-1) ?? title.trim() ?? DEFAULT_SITE_NAME;
+}
+
 function resolveConfiguredOrigin() {
   const configured = import.meta.env.VITE_PUBLIC_APP_URL?.trim();
 
@@ -36,10 +45,6 @@ function resolveConfiguredOrigin() {
 }
 
 export function resolveSiteOrigin() {
-  if (typeof window !== "undefined") {
-    return window.location.origin;
-  }
-
   return resolveConfiguredOrigin() ?? DEFAULT_SITE_ORIGIN;
 }
 
@@ -138,18 +143,20 @@ export function useSeoMetadata(input: PageMetadataInput) {
     }
 
     const siteOrigin = resolveSiteOrigin();
+    const isPreviewHost = typeof window !== "undefined" && window.location.hostname.endsWith(".pages.dev");
+    const robots = isPreviewHost ? "noindex,nofollow" : input.robots ?? "index,follow";
     const canonicalUrl = toAbsoluteUrl(input.path, siteOrigin);
     const imageUrl = toAbsoluteUrl(input.image ?? DEFAULT_IMAGE_PATH, siteOrigin);
 
     document.title = input.title;
     upsertMetaTag('meta[name="description"]', { name: "description" }, input.description);
-    upsertMetaTag('meta[name="robots"]', { name: "robots" }, input.robots ?? "index,follow");
+    upsertMetaTag('meta[name="robots"]', { name: "robots" }, robots);
     upsertLinkTag('link[rel="canonical"]', { rel: "canonical" }, canonicalUrl);
 
     upsertMetaTag('meta[property="og:title"]', { property: "og:title" }, input.title);
     upsertMetaTag('meta[property="og:description"]', { property: "og:description" }, input.description);
     upsertMetaTag('meta[property="og:url"]', { property: "og:url" }, canonicalUrl);
-    upsertMetaTag('meta[property="og:site_name"]', { property: "og:site_name" }, DEFAULT_SITE_NAME);
+    upsertMetaTag('meta[property="og:site_name"]', { property: "og:site_name" }, resolveSiteName(input.title));
     upsertMetaTag('meta[property="og:locale"]', { property: "og:locale" }, "ko_KR");
     upsertMetaTag('meta[property="og:type"]', { property: "og:type" }, input.ogType ?? "website");
     upsertMetaTag('meta[property="og:image"]', { property: "og:image" }, imageUrl);
@@ -202,7 +209,7 @@ export function createWebSiteStructuredData(args: {
     inLanguage: "ko-KR",
     potentialAction: {
       "@type": "SearchAction",
-      target: toAbsoluteUrl("/search?q={search_term_string}"),
+      target: toAbsoluteUrl("/ko/search?q={search_term_string}"),
       "query-input": "required name=search_term_string",
     },
   };
@@ -257,33 +264,40 @@ export function createBlogPostingStructuredData(args: {
   image?: string | null;
   publishedAt?: string | null;
   updatedAt?: string | null;
-  categoryName?: string | null;
+  categoryName?: string;
   tags?: string[];
+  authorName?: string;
+  publisherName?: string;
+  publisherLogo?: string | null;
   breadcrumbs: BreadcrumbItem[];
-  authorName: string;
 }) {
-  const post = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: args.title,
-    description: args.description,
-    mainEntityOfPage: toAbsoluteUrl(args.path),
-    url: toAbsoluteUrl(args.path),
-    image: [toAbsoluteUrl(args.image ?? DEFAULT_IMAGE_PATH)],
-    datePublished: args.publishedAt ?? undefined,
-    dateModified: args.updatedAt ?? args.publishedAt ?? undefined,
-    articleSection: args.categoryName ?? undefined,
-    keywords: args.tags?.length ? args.tags.join(", ") : undefined,
-    author: {
-      "@type": "Person",
-      name: args.authorName,
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: args.title,
+      description: args.description,
+      mainEntityOfPage: toAbsoluteUrl(args.path),
+      url: toAbsoluteUrl(args.path),
+      image: [toAbsoluteUrl(args.image ?? DEFAULT_IMAGE_PATH)],
+      datePublished: args.publishedAt || undefined,
+      dateModified: args.updatedAt || args.publishedAt || undefined,
+      articleSection: args.categoryName || undefined,
+      keywords: args.tags?.length ? args.tags.join(", ") : undefined,
+      author: {
+        "@type": "Person",
+        name: args.authorName ?? "동그리",
+      },
+      publisher: {
+        "@type": "Organization",
+        name: args.publisherName ?? "동그리의 기록소",
+        logo: {
+          "@type": "ImageObject",
+          url: toAbsoluteUrl(args.publisherLogo ?? DEFAULT_IMAGE_PATH),
+        },
+      },
+      inLanguage: "ko-KR",
     },
-    publisher: {
-      "@type": "Person",
-      name: args.authorName,
-    },
-    inLanguage: "ko-KR",
-  };
-
-  return [post, createBreadcrumbStructuredData(args.breadcrumbs)];
+    createBreadcrumbStructuredData(args.breadcrumbs),
+  ];
 }

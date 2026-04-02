@@ -1,0 +1,27 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+import { getPosts, type BlogPostEntry } from "../../lib/content";
+
+export async function getStaticPaths() {
+  return [{ params: { lang: "ko" } }, { params: { lang: "en" } }];
+}
+
+const lang = Astro.params.lang as "ko" | "en";
+const posts = (await getPosts(lang)) as BlogPostEntry[];
+const title = lang === "ko" ? "동그리 아카이브" : "Donggri Archive";
+const description =
+  lang === "ko"
+    ? "로컬 작성기에서 완성한 글을 Astro 정적 블로그로 공개하는 전환 버전입니다."
+    : "A transitional Astro blog powered by exported content from the local editor.";
+---
+<BaseLayout title={title} description={description} pathname={`/${lang}/`}>
+  <section class="language-home">
+    <p class="eyebrow">{lang === "ko" ? "정적 블로그 홈" : "Static blog home"}</p>
+    <h1>{title}</h1>
+    <p>{description}</p>
+  </section>
+  <section class="post-grid">
+    {posts.map((post: BlogPostEntry) => <PostCard post={post} />)}
+  </section>
+</BaseLayout>

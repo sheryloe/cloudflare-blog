@@ -1,0 +1,38 @@
+---
+import SEOHead from "../components/SEOHead.astro";
+import "../styles/global.css";
+
+const {
+  title = "Donggri Archive",
+  description = "로컬 작성기와 정적 배포 흐름을 분리한 Astro 블로그",
+  pathname = Astro.url.pathname,
+  alternateLinks = [],
+} = Astro.props as {
+  title?: string;
+  description?: string;
+  pathname?: string;
+  alternateLinks?: Array<{ lang: string; pathname: string }>;
+};
+---
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <SEOHead title={title} description={description} pathname={pathname} alternateLinks={alternateLinks} />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="site-header__brand" href="/">Donggri Archive</a>
+        <nav class="site-header__nav">
+          <a href="/ko/">KO</a>
+          <a href="/en/">EN</a>
+        </nav>
+      </header>
+      <main class="site-main">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

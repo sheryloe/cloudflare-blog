@@ -1,0 +1,34 @@
+---
+title: "A Static Blog Workflow Powered by a Local Editor"
+description: "Write locally, export to MDX, and publish through an Astro static blog."
+lang: "en"
+slug: "welcome-local-workflow"
+groupId: "welcome-local-workflow"
+translationOf: "welcome-local-workflow"
+publishedAt: "2026-03-18"
+updatedAt: "2026-03-18"
+draft: false
+coverImage: "/images/posts/welcome-local-workflow/cover.svg"
+coverAlt: "Artwork describing the local editor and static publishing workflow"
+tags: ["workflow", "astro", "editor-local"]
+category: "guide"
+canonicalLang: "ko"
+ogImage: "/images/posts/welcome-local-workflow/cover.svg"
+---
+
+## Why this architecture
+
+The older split between public web, admin, and API was fast to bootstrap, but the writing flow and the deployment boundary kept mixing together.
+
+With the new structure, authoring ends locally and only `apps/blog-web` is deployed.
+
+## What is already here
+
+- language homes at `/ko/` and `/en/`
+- static tag and category pages
+- a language switcher
+- frontmatter driven static generation
+
+## What comes next
+
+Once the local editor can export reviewed MDX with translation and scoring, the publishing workflow becomes much simpler.

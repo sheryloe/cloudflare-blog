@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Local Editor Workflow</title>
+  <desc id="desc">Illustration for the static blog workflow.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6e3d4" />
+      <stop offset="100%" stop-color="#e6edf6" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" rx="36" fill="url(#bg)" />
+  <rect x="88" y="88" width="426" height="454" rx="28" fill="#ffffff" opacity="0.9" />
+  <rect x="558" y="126" width="556" height="378" rx="28" fill="#ffffff" opacity="0.82" />
+  <circle cx="233" cy="180" r="24" fill="#d26b33" />
+  <rect x="180" y="164" width="260" height="32" rx="16" fill="#1f2a3a" opacity="0.12" />
+  <rect x="138" y="244" width="326" height="22" rx="11" fill="#1f2a3a" opacity="0.1" />
+  <rect x="138" y="286" width="302" height="22" rx="11" fill="#1f2a3a" opacity="0.08" />
+  <rect x="138" y="328" width="280" height="22" rx="11" fill="#1f2a3a" opacity="0.08" />
+  <rect x="138" y="396" width="146" height="42" rx="21" fill="#d26b33" />
+  <text x="596" y="236" fill="#1f2a3a" font-size="64" font-family="'Georgia', serif">Local editor</text>
+  <text x="596" y="320" fill="#1f2a3a" font-size="64" font-family="'Georgia', serif">&amp; static Astro blog</text>
+  <text x="596" y="390" fill="#6f7886" font-size="28" font-family="'Segoe UI', sans-serif">Write locally · export MDX · deploy only the blog</text>
+</svg>

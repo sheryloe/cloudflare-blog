@@ -4,7 +4,9 @@ import type {
   CategoryFeed,
   Post,
   PostSummary,
+  RecordPostViewResult,
   SearchPostsResult,
+  SiteSettings,
   TagFeed,
 } from "@cloudflare-blog/shared";
 
@@ -76,12 +78,28 @@ export function listPosts() {
   return request<PostSummary[]>("/api/public/posts");
 }
 
+export function listTopPosts(limit = 5) {
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  return request<PostSummary[]>(`/api/public/posts/top?${params.toString()}`);
+}
+
 export function getPost(slug: string) {
   return request<Post>(`/api/public/posts/${slug}`);
 }
 
+export function recordPostView(slug: string) {
+  return request<RecordPostViewResult>(`/api/public/posts/${slug}/view`, {
+    method: "POST",
+  });
+}
+
 export function listCategories() {
   return request<Category[]>("/api/public/categories");
+}
+
+export function getSiteSettings() {
+  return request<SiteSettings>("/api/public/site-settings");
 }
 
 export function getCategoryFeed(slug: string) {

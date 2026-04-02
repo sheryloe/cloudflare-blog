@@ -1,19 +1,22 @@
-name = "cloudflare-blog-api"
+name = "donggeuri-api"
 main = "src/index.ts"
 compatibility_date = "2026-03-16"
 workers_dev = true
 
 [[d1_databases]]
 binding = "DB"
-database_name = "cloudflare-blog"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_name = "donggeuri-blog"
+database_id = "705e0849-4e97-43a6-ba77-1c76f0dde46d"
 
 [[r2_buckets]]
 binding = "ASSETS"
-bucket_name = "cloudflare-blog-assets"
-preview_bucket_name = "cloudflare-blog-assets-preview"
+bucket_name = "donggeuri-assets"
+preview_bucket_name = "donggeuri-assets-preview"
 
 [vars]
-PUBLIC_APP_ORIGIN = "https://blog.example.com"
-ADMIN_APP_ORIGIN = "https://admin.example.com"
-R2_PUBLIC_BASE_URL = "https://assets.example.com"
+PUBLIC_APP_ORIGIN = "https://example.com,https://www.example.com,https://donggri-world.pages.dev"
+ADMIN_APP_ORIGIN = "https://donggri-world-admin.pages.dev"
+R2_PUBLIC_BASE_URL = "https://api.example.com/assets"
+AUTOMATION_API_KEY = "change-me-in-cloudflare-or-dev-vars"
+AUTOMATION_ALLOWED_IPS = "change-me-in-cloudflare-or-dev-vars"
+BLOGGERGENT_ALLOWED_ORIGIN = "http://localhost:7001"

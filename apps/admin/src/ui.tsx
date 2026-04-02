@@ -6,18 +6,34 @@ import { cn } from "./lib/utils";
 
 export function formatDate(value?: string | null) {
   if (!value) {
-    return "Not set";
+    return "미설정";
   }
 
   return new Date(value).toLocaleString();
 }
 
 export function toDateInputValue(value?: string | null) {
-  return value ? new Date(value).toISOString().slice(0, 16) : "";
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const localValue = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return localValue.toISOString().slice(0, 16);
 }
 
 export function toIsoValue(value: string) {
-  return value ? new Date(value).toISOString() : null;
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
 export function ShellCard(props: {
@@ -33,7 +49,7 @@ export function ShellCard(props: {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
             <div className="inline-flex w-fit items-center rounded-full border border-black/8 bg-white/70 px-3 py-1.5 shadow-sm">
-              <p className="section-kicker !tracking-[0.28em]">Editorial Ops</p>
+              <p className="section-kicker !tracking-[0.28em]">에디터 운영</p>
             </div>
             <CardTitle className="text-2xl sm:text-[2rem]">{props.title}</CardTitle>
             {props.description ? <CardDescription>{props.description}</CardDescription> : null}
@@ -59,9 +75,9 @@ export function ErrorMessage(props: { message: string | null }) {
 export function LoadingPanel(props: { message: string }) {
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <ShellCard title="Loading" description={props.message}>
+      <ShellCard title="로딩 중" description={props.message}>
         <div className="rounded-[28px] border border-black/5 bg-white/65 px-5 py-8 text-sm text-[var(--color-soft-ink)]">
-          Preparing the workspace. Please wait a moment.
+          작업공간을 준비하는 중입니다. 잠시만 기다려 주세요.
         </div>
       </ShellCard>
     </div>

@@ -4,6 +4,12 @@ interface ImportMetaEnv {
   readonly VITE_ADMIN_APP_URL?: string;
   readonly VITE_API_BASE_URL?: string;
   readonly VITE_GA_MEASUREMENT_ID?: string;
+  readonly VITE_GISCUS_REPO?: string;
+  readonly VITE_GISCUS_REPO_ID?: string;
+  readonly VITE_GISCUS_CATEGORY?: string;
+  readonly VITE_GISCUS_CATEGORY_ID?: string;
+  readonly VITE_GISCUS_MAPPING?: string;
+  readonly VITE_GISCUS_THEME?: string;
   readonly VITE_PUBLIC_APP_URL?: string;
 }
 

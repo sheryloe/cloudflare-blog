@@ -1,0 +1,13 @@
+services:
+  testdocker:
+    build:
+      context: ..
+      dockerfile: testdocker/Dockerfile
+    container_name: testdocker
+    working_dir: /workspace
+    command: bash -lc "python3 -m http.server 8090 --directory /workspace"
+    volumes:
+      - ../:/workspace
+    ports:
+      - "8090:8090"
+    restart: unless-stopped

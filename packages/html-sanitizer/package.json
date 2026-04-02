@@ -1,0 +1,20 @@
+{
+  "name": "@cloudflare-blog/html-sanitizer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "sanitize-html": "^2.13.1"
+  },
+  "devDependencies": {
+    "@types/sanitize-html": "^2.16.0",
+    "typescript": "^5.8.2"
+  }
+}

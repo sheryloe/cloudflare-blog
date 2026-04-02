@@ -4,8 +4,12 @@ import type { Context } from "hono";
 
 import type { AppEnv, WorkerBindings } from "../types";
 
-const SESSION_COOKIE_NAME = "cloudflare_blog_admin_session";
+const SESSION_COOKIE_NAME = "donggeuri_admin_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
+const LOCAL_DEV_ADMIN_EMAIL = "admin@example.com";
+const LOCAL_DEV_ADMIN_PASSWORD_HASH =
+  "sha256:5c06eb3d5a05a19f49476d694ca81a36344660e9d5b98e3d6a6630f31c2422e7";
+const LOCAL_DEV_JWT_SECRET = "local-dev-secret";
 
 export class ConfigurationError extends Error {
   constructor(message: string) {
@@ -17,6 +21,12 @@ export class ConfigurationError extends Error {
 interface SessionPayload {
   email: string;
   exp: number;
+}
+
+interface ResolvedAdminConfig {
+  adminEmail?: string;
+  adminPasswordHash?: string;
+  jwtSecret?: string;
 }
 
 function encodeBase64Url(value: string) {
@@ -51,6 +61,33 @@ async function sign(value: string, secret: string) {
   const key = await importHmacKey(secret);
   const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
   return encodeBase64Url(String.fromCharCode(...new Uint8Array(signature)));
+}
+
+function isLocalRequestUrl(requestUrl?: string) {
+  if (!requestUrl) {
+    return false;
+  }
+
+  try {
+    const { hostname } = new URL(requestUrl);
+    return hostname === "127.0.0.1" || hostname === "localhost";
+  } catch {
+    return false;
+  }
+}
+
+function resolveAdminConfig(env: WorkerBindings, requestUrl?: string): ResolvedAdminConfig {
+  const localRequest = isLocalRequestUrl(requestUrl);
+  const adminEmail = env.ADMIN_EMAIL?.trim() || (localRequest ? LOCAL_DEV_ADMIN_EMAIL : undefined);
+  const adminPasswordHash =
+    env.ADMIN_PASSWORD_HASH?.trim() || (localRequest ? LOCAL_DEV_ADMIN_PASSWORD_HASH : undefined);
+  const jwtSecret = env.JWT_SECRET?.trim() || (localRequest ? LOCAL_DEV_JWT_SECRET : undefined);
+
+  return {
+    adminEmail,
+    adminPasswordHash,
+    jwtSecret,
+  };
 }
 
 function requireJwtSecret(secret: string | undefined) {
@@ -132,33 +169,36 @@ async function verifySessionToken(token: string, secret: string): Promise<Sessio
 export async function verifyAdminCredentials(
   credentials: LoginInput,
   env: WorkerBindings,
+  requestUrl?: string,
 ): Promise<boolean> {
-  requireJwtSecret(env.JWT_SECRET);
+  const config = resolveAdminConfig(env, requestUrl);
+  requireJwtSecret(config.jwtSecret);
 
-  if (!env.ADMIN_EMAIL || !env.ADMIN_PASSWORD_HASH) {
+  if (!config.adminEmail || !config.adminPasswordHash) {
     return false;
   }
 
-  if (credentials.email.trim().toLowerCase() !== env.ADMIN_EMAIL.trim().toLowerCase()) {
+  if (credentials.email.trim().toLowerCase() !== config.adminEmail.trim().toLowerCase()) {
     return false;
   }
 
   const candidate = await sha256Hex(credentials.password);
-  const stored = normalizePasswordHash(env.ADMIN_PASSWORD_HASH);
+  const stored = normalizePasswordHash(config.adminPasswordHash);
   return stored === candidate;
 }
 
 export async function getAdminSession(c: Context<AppEnv>): Promise<AdminSession> {
   const token = getBearerToken(c) ?? getCookie(c, SESSION_COOKIE_NAME);
+  const config = resolveAdminConfig(c.env, c.req.url);
 
-  if (!token || !c.env.JWT_SECRET) {
+  if (!token || !config.jwtSecret) {
     return {
       authenticated: false,
       user: null,
     };
   }
 
-  const payload = await verifySessionToken(token, c.env.JWT_SECRET);
+  const payload = await verifySessionToken(token, config.jwtSecret);
 
   if (!payload) {
     return {
@@ -176,7 +216,8 @@ export async function getAdminSession(c: Context<AppEnv>): Promise<AdminSession>
 }
 
 export async function createAdminSession(c: Context<AppEnv>, email: string) {
-  const token = await createSessionToken(email, requireJwtSecret(c.env.JWT_SECRET));
+  const config = resolveAdminConfig(c.env, c.req.url);
+  const token = await createSessionToken(email, requireJwtSecret(config.jwtSecret));
   const secure = new URL(c.req.url).protocol === "https:";
 
   // Keep the cookie for same-site custom-domain deployments, but also return

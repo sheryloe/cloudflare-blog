@@ -1,0 +1,19 @@
+---
+import type { BlogPostEntry } from "../lib/content";
+import { categoryPath, postPath } from "../lib/content";
+
+const { post } = Astro.props as { post: BlogPostEntry };
+---
+<article class="post-card">
+  <a href={postPath(post)}>
+    <img class="post-card__cover" src={post.data.coverImage} alt={post.data.coverAlt} loading="lazy" />
+  </a>
+  <div class="post-card__body">
+    <div class="post-card__meta">
+      <a href={categoryPath(post.data.lang, post.data.category)}>{post.data.category}</a>
+      <span>{post.data.publishedAt}</span>
+    </div>
+    <h2><a href={postPath(post)}>{post.data.title}</a></h2>
+    <p>{post.data.description}</p>
+  </div>
+</article>

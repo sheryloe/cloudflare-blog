@@ -1,14 +1,43 @@
-const SITE_TITLE = "Cloudflare Blog";
-const SITE_ALT_NAME = "Cloudflare Blog Template";
-const SITE_AUTHOR = "Blog Author";
-const SITE_DESCRIPTION =
-  "Cloudflare Pages, Workers, D1, R2를 바탕으로 만든 재사용 가능한 공개 블로그 템플릿입니다.";
-const ABOUT_DESCRIPTION =
-  "Cloudflare Blog는 공개 웹, 관리자 앱, API를 분리해 운영할 수 있게 만든 재사용용 블로그 템플릿입니다.";
-const SEARCH_DESCRIPTION =
-  "주제어 하나로 공개 글을 다시 찾을 수 있는 검색 페이지입니다.";
+const DEFAULT_SITE_SETTINGS = {
+  branding: {
+    siteTitle: "동그리의 기록소",
+    siteAltName: "동그리 아카이브",
+    siteAuthor: "동그리",
+    siteDescription: "동그리의 기록소는 기술, 시장, 생활, 미스터리 기록을 구조적으로 정리하는 아카이브입니다.",
+  },
+  about: {
+    description: "보이는 글 하나를 모으고 맥락을 다시 정리하는 동그리의 기록소 블로그입니다.",
+  },
+  search: {
+    description: "입력한 키워드로 공개 글을 빠르게 찾아보는 검색 페이지입니다.",
+  },
+};
 const DEFAULT_OG_IMAGE_PATH = "/og-default.svg";
 const API_FALLBACK_ORIGIN = "https://api.example.com";
+const PUBLIC_SITE_ORIGIN = "https://example.com";
+const KO_BASE_PATH = "/ko";
+
+function withKoPath(path) {
+  if (path === "/") {
+    return `${KO_BASE_PATH}/`;
+  }
+
+  return `${KO_BASE_PATH}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function stripKoPrefix(pathname) {
+  const normalized = pathname === "/" ? "/" : pathname.replace(/\/$/, "");
+
+  if (normalized === KO_BASE_PATH) {
+    return "/";
+  }
+
+  if (normalized.startsWith(`${KO_BASE_PATH}/`)) {
+    return normalized.slice(KO_BASE_PATH.length) || "/";
+  }
+
+  return normalized;
+}
 
 function trimTrailingSlash(value) {
   return value.replace(/\/$/, "");
@@ -16,6 +45,39 @@ function trimTrailingSlash(value) {
 
 function resolveApiOrigin(env) {
   return trimTrailingSlash(env.API_ORIGIN || API_FALLBACK_ORIGIN);
+}
+
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function pickString(value, fallback) {
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+function normalizeSiteSettings(value) {
+  if (!isRecord(value)) {
+    return DEFAULT_SITE_SETTINGS;
+  }
+
+  const branding = isRecord(value.branding) ? value.branding : {};
+  const about = isRecord(value.about) ? value.about : {};
+  const search = isRecord(value.search) ? value.search : {};
+
+  return {
+    branding: {
+      siteTitle: pickString(branding.siteTitle, DEFAULT_SITE_SETTINGS.branding.siteTitle),
+      siteAltName: pickString(branding.siteAltName, DEFAULT_SITE_SETTINGS.branding.siteAltName),
+      siteAuthor: pickString(branding.siteAuthor, DEFAULT_SITE_SETTINGS.branding.siteAuthor),
+      siteDescription: pickString(branding.siteDescription, DEFAULT_SITE_SETTINGS.branding.siteDescription),
+    },
+    about: {
+      description: pickString(about.description, DEFAULT_SITE_SETTINGS.about.description),
+    },
+    search: {
+      description: pickString(search.description, DEFAULT_SITE_SETTINGS.search.description),
+    },
+  };
 }
 
 function toAbsoluteUrl(origin, pathOrUrl) {
@@ -39,7 +101,7 @@ function stripMarkdown(value) {
 }
 
 function buildExcerpt(value, maxLength = 160) {
-  const normalized = stripMarkdown(value);
+  const normalized = stripMarkdown(value || "");
 
   if (normalized.length <= maxLength) {
     return normalized;
@@ -47,12 +109,7 @@ function buildExcerpt(value, maxLength = 160) {
 
   const slice = normalized.slice(0, maxLength).trimEnd();
   const boundary = slice.lastIndexOf(" ");
-
-  if (boundary >= maxLength * 0.6) {
-    return `${slice.slice(0, boundary).trimEnd()}...`;
-  }
-
-  return `${slice}...`;
+  return boundary >= maxLength * 0.6 ? `${slice.slice(0, boundary).trimEnd()}...` : `${slice}...`;
 }
 
 function createBreadcrumbStructuredData(origin, items) {
@@ -68,18 +125,18 @@ function createBreadcrumbStructuredData(origin, items) {
   };
 }
 
-function createWebSiteStructuredData(origin, description) {
+function createWebSiteStructuredData(origin, settings, description) {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: SITE_TITLE,
-    alternateName: SITE_ALT_NAME,
-    url: toAbsoluteUrl(origin, "/"),
+    name: settings.branding.siteTitle,
+    alternateName: settings.branding.siteAltName,
+    url: toAbsoluteUrl(origin, withKoPath("/")),
     description,
     inLanguage: "ko-KR",
     potentialAction: {
       "@type": "SearchAction",
-      target: toAbsoluteUrl(origin, "/search?q={search_term_string}"),
+      target: toAbsoluteUrl(origin, withKoPath("/search?q={search_term_string}")),
       "query-input": "required name=search_term_string",
     },
   };
@@ -116,7 +173,11 @@ function createCollectionPageStructuredData(origin, args) {
   ];
 }
 
-function createBlogPostingStructuredData(origin, args) {
+function createBlogPostingStructuredData(origin, settings, args) {
+  const publisherName = args.publisherName || "동그리의 기록소";
+  const authorName = args.authorName || "동그리";
+  const publisherLogo = args.publisherLogo || DEFAULT_OG_IMAGE_PATH;
+
   return [
     {
       "@context": "https://schema.org",
@@ -130,13 +191,14 @@ function createBlogPostingStructuredData(origin, args) {
       dateModified: args.updatedAt || args.publishedAt || undefined,
       articleSection: args.categoryName || undefined,
       keywords: args.tags?.length ? args.tags.join(", ") : undefined,
-      author: {
-        "@type": "Person",
-        name: SITE_AUTHOR,
-      },
+      author: { "@type": "Person", name: authorName },
       publisher: {
-        "@type": "Person",
-        name: SITE_AUTHOR,
+        "@type": "Organization",
+        name: publisherName,
+        logo: {
+          "@type": "ImageObject",
+          url: toAbsoluteUrl(origin, publisherLogo),
+        },
       },
       inLanguage: "ko-KR",
     },
@@ -147,9 +209,7 @@ function createBlogPostingStructuredData(origin, args) {
 async function fetchPublicData(apiOrigin, path) {
   try {
     const response = await fetch(`${apiOrigin}${path}`, {
-      headers: {
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json" },
     });
 
     if (!response.ok) {
@@ -163,88 +223,92 @@ async function fetchPublicData(apiOrigin, path) {
   }
 }
 
-function matchRoute(pathname) {
-  const normalized = pathname === "/" ? "/" : pathname.replace(/\/$/, "");
-
-  if (normalized === "/") {
-    return { kind: "home" };
-  }
-
-  if (normalized === "/about") {
-    return { kind: "about" };
-  }
-
-  if (normalized === "/search") {
-    return { kind: "search" };
-  }
-
-  let match = normalized.match(/^\/post\/([^/]+)$/);
-
-  if (match) {
-    return { kind: "post", slug: decodeURIComponent(match[1]) };
-  }
-
-  match = normalized.match(/^\/category\/([^/]+)$/);
-
-  if (match) {
-    return { kind: "category", slug: decodeURIComponent(match[1]) };
-  }
-
-  match = normalized.match(/^\/tag\/([^/]+)$/);
-
-  if (match) {
-    return { kind: "tag", slug: decodeURIComponent(match[1]) };
-  }
-
-  return { kind: "fallback" };
+async function fetchSiteSettings(apiOrigin) {
+  const data = await fetchPublicData(apiOrigin, "/api/public/site-settings");
+  return normalizeSiteSettings(data);
 }
 
-function getDefaultMetadata(origin, path) {
+function matchRoute(pathname) {
+  const normalized = stripKoPrefix(pathname);
+
+  if (normalized === "/") return { kind: "home" };
+  if (normalized === "/about") return { kind: "about" };
+  if (normalized === "/search") return { kind: "search" };
+  if (normalized === "/privacy") return { kind: "privacy" };
+  if (normalized === "/contact") return { kind: "contact" };
+  if (normalized === "/terms") return { kind: "terms" };
+  if (normalized === "/disclaimer") return { kind: "disclaimer" };
+  if (normalized === "/editorial-policy") return { kind: "editorial-policy" };
+  if (normalized === "/test-preview") return { kind: "test-preview" };
+
+  let match = normalized.match(/^\/post\/([^/]+)$/);
+  if (match) return { kind: "post", slug: decodeURIComponent(match[1]) };
+
+  match = normalized.match(/^\/category-preview\/([^/]+)$/);
+  if (match) return { kind: "category-preview", slug: decodeURIComponent(match[1]) };
+
+  match = normalized.match(/^\/category\/([^/]+)$/);
+  if (match) return { kind: "category", slug: decodeURIComponent(match[1]) };
+
+  match = normalized.match(/^\/tag\/([^/]+)$/);
+  if (match) return { kind: "tag", slug: decodeURIComponent(match[1]) };
+
+  return { kind: "not-found" };
+}
+
+function getDefaultMetadata(origin, path, siteSettings) {
   return {
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
+    title: siteSettings.branding.siteTitle,
+    description: siteSettings.branding.siteDescription,
     canonicalUrl: toAbsoluteUrl(origin, path),
     robots: "index,follow",
     ogType: "website",
     ogImage: toAbsoluteUrl(origin, DEFAULT_OG_IMAGE_PATH),
-    structuredData: createWebSiteStructuredData(origin, SITE_DESCRIPTION),
+    status: 200,
+    structuredData: createWebSiteStructuredData(origin, siteSettings, siteSettings.branding.siteDescription),
   };
 }
 
 async function buildMetadata(request, env) {
   const url = new URL(request.url);
-  const origin = url.origin;
+  const canonicalOrigin = PUBLIC_SITE_ORIGIN;
   const apiOrigin = resolveApiOrigin(env);
+  const siteSettings = await fetchSiteSettings(apiOrigin);
   const route = matchRoute(url.pathname);
+  const previewRobots = url.hostname.endsWith(".pages.dev") ? "noindex,nofollow" : null;
+  const staticPages = {
+    privacy: ["개인정보처리방침", "동그리아카이브의 개인정보 처리 방침을 안내합니다.", withKoPath("/privacy")],
+    contact: ["문의", "운영 문의, 정정 요청, 저작권 문의 방법을 안내합니다.", withKoPath("/contact")],
+    terms: ["이용조건", "동그리아카이브 콘텐츠 이용 조건을 안내합니다.", withKoPath("/terms")],
+    disclaimer: ["면책 고지", "콘텐츠 해석 범위와 면책 고지를 안내합니다.", withKoPath("/disclaimer")],
+    "editorial-policy": ["편집 정책", "동그리아카이브의 편집 원칙과 기록 기준을 공개합니다.", withKoPath("/editorial-policy")],
+  };
 
   if (route.kind === "home") {
     return {
-      title: SITE_TITLE,
-      description: SITE_DESCRIPTION,
-      canonicalUrl: toAbsoluteUrl(origin, "/"),
-      robots: "index,follow",
-      ogType: "website",
-      ogImage: toAbsoluteUrl(origin, DEFAULT_OG_IMAGE_PATH),
-      structuredData: createWebSiteStructuredData(origin, SITE_DESCRIPTION),
+      ...getDefaultMetadata(canonicalOrigin, withKoPath("/"), siteSettings),
+      canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath("/")),
+      robots: previewRobots ?? "index,follow",
     };
   }
 
   if (route.kind === "about") {
     return {
-      title: `소개 | ${SITE_TITLE}`,
-      description: ABOUT_DESCRIPTION,
-      canonicalUrl: toAbsoluteUrl(origin, "/about"),
-      robots: "index,follow",
+      title: `소개 | ${siteSettings.branding.siteTitle}`,
+      description: siteSettings.about.description,
+      canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath("/about")),
+      robots: previewRobots ?? "index,follow",
       ogType: "website",
-      ogImage: toAbsoluteUrl(origin, DEFAULT_OG_IMAGE_PATH),
-      structuredData: createWebPageStructuredData(origin, {
+      ogImage: toAbsoluteUrl(canonicalOrigin, DEFAULT_OG_IMAGE_PATH),
+      status: 200,
+      structuredData: createWebPageStructuredData(canonicalOrigin, {
         type: "AboutPage",
-        name: `소개 | ${SITE_TITLE}`,
-        description: ABOUT_DESCRIPTION,
-        path: "/about",
+        name: `소개 | ${siteSettings.branding.siteTitle}`,
+        description: siteSettings.about.description,
+        path: withKoPath("/about"),
         breadcrumbs: [
-          { name: SITE_TITLE, path: "/" },
-          { name: "소개", path: "/about" },
+          { name: siteSettings.branding.siteTitle, path: withKoPath("/") },
+          { name: "소개", path: withKoPath("/about") },
         ],
       }),
     };
@@ -252,20 +316,77 @@ async function buildMetadata(request, env) {
 
   if (route.kind === "search") {
     return {
-      title: `검색 | ${SITE_TITLE}`,
-      description: SEARCH_DESCRIPTION,
-      canonicalUrl: toAbsoluteUrl(origin, "/search"),
-      robots: "noindex,follow",
+      title: `검색 | ${siteSettings.branding.siteTitle}`,
+      description: siteSettings.search.description,
+      canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath("/search")),
+      robots: previewRobots ?? "noindex,follow",
       ogType: "website",
-      ogImage: toAbsoluteUrl(origin, DEFAULT_OG_IMAGE_PATH),
-      structuredData: createWebPageStructuredData(origin, {
-        name: `검색 | ${SITE_TITLE}`,
-        description: SEARCH_DESCRIPTION,
-        path: "/search",
+      ogImage: toAbsoluteUrl(canonicalOrigin, DEFAULT_OG_IMAGE_PATH),
+      status: 200,
+      structuredData: createWebPageStructuredData(canonicalOrigin, {
+        name: `검색 | ${siteSettings.branding.siteTitle}`,
+        description: siteSettings.search.description,
+        path: withKoPath("/search"),
         breadcrumbs: [
-          { name: SITE_TITLE, path: "/" },
-          { name: "검색", path: "/search" },
+          { name: siteSettings.branding.siteTitle, path: withKoPath("/") },
+          { name: "검색", path: withKoPath("/search") },
         ],
+      }),
+    };
+  }
+
+  if (route.kind === "test-preview") {
+    return {
+      title: `배포 전 테스트 | ${siteSettings.branding.siteTitle}`,
+      description: "배포 전 공개 페이지/정책 페이지/피드 동작을 빠르게 확인하기 위한 내부 점검 페이지입니다.",
+      canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath("/test-preview")),
+      robots: "noindex,nofollow",
+      ogType: "website",
+      ogImage: toAbsoluteUrl(canonicalOrigin, DEFAULT_OG_IMAGE_PATH),
+      status: 200,
+      structuredData: createWebPageStructuredData(canonicalOrigin, {
+        name: `배포 전 테스트 | ${siteSettings.branding.siteTitle}`,
+        description: "배포 전 공개 페이지/정책 페이지/피드 동작을 빠르게 확인하기 위한 내부 점검 페이지입니다.",
+        path: withKoPath("/test-preview"),
+      }),
+    };
+  }
+
+  if (staticPages[route.kind]) {
+    const [label, description, path] = staticPages[route.kind];
+    return {
+      title: `${label} | ${siteSettings.branding.siteTitle}`,
+      description,
+      canonicalUrl: toAbsoluteUrl(canonicalOrigin, path),
+      robots: previewRobots ?? "index,follow",
+      ogType: "website",
+      ogImage: toAbsoluteUrl(canonicalOrigin, DEFAULT_OG_IMAGE_PATH),
+      status: 200,
+      structuredData: createWebPageStructuredData(canonicalOrigin, {
+        name: `${label} | ${siteSettings.branding.siteTitle}`,
+        description,
+        path,
+        breadcrumbs: [
+          { name: siteSettings.branding.siteTitle, path: withKoPath("/") },
+          { name: label, path },
+        ],
+      }),
+    };
+  }
+
+  if (route.kind === "category-preview") {
+    return {
+      title: `카테고리 프리뷰 | ${siteSettings.branding.siteTitle}`,
+      description: "루트 카테고리와 하위 카테고리 레이아웃을 검토하기 위한 비색인 프리뷰 페이지입니다.",
+      canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath(`/category/${route.slug}`)),
+      robots: "noindex,nofollow",
+      ogType: "website",
+      ogImage: toAbsoluteUrl(canonicalOrigin, DEFAULT_OG_IMAGE_PATH),
+      status: 200,
+      structuredData: createWebPageStructuredData(canonicalOrigin, {
+        name: `카테고리 프리뷰 | ${siteSettings.branding.siteTitle}`,
+        description: "루트 카테고리와 하위 카테고리 레이아웃을 검토하기 위한 비색인 프리뷰 페이지입니다.",
+        path: withKoPath(`/category-preview/${route.slug}`),
       }),
     };
   }
@@ -275,26 +396,37 @@ async function buildMetadata(request, env) {
 
     if (!feed) {
       return {
-        ...getDefaultMetadata(origin, url.pathname),
-        canonicalUrl: toAbsoluteUrl(origin, url.pathname),
+        title: `페이지를 찾을 수 없음 | ${siteSettings.branding.siteTitle}`,
+        description: "요청한 카테고리를 찾지 못했습니다.",
+        canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath(`/category/${route.slug}`)),
         robots: "noindex,follow",
+        ogType: "website",
+        ogImage: toAbsoluteUrl(canonicalOrigin, DEFAULT_OG_IMAGE_PATH),
+        status: 404,
+        structuredData: createWebPageStructuredData(canonicalOrigin, {
+          name: `페이지를 찾을 수 없음 | ${siteSettings.branding.siteTitle}`,
+          description: "요청한 카테고리를 찾지 못했습니다.",
+          path: withKoPath(`/category/${route.slug}`),
+        }),
       };
     }
 
+    const description = feed.category.description || `${feed.category.name} 공개 글을 모아보는 카테고리 페이지입니다.`;
     return {
-      title: `${feed.category.name} | ${SITE_TITLE}`,
-      description: feed.category.description || `${feed.category.name} 갈래의 공개 글을 모아보는 페이지입니다.`,
-      canonicalUrl: toAbsoluteUrl(origin, `/category/${feed.category.slug}`),
-      robots: "index,follow",
+      title: `${feed.category.name} | ${siteSettings.branding.siteTitle}`,
+      description,
+      canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath(`/category/${feed.category.slug}`)),
+      robots: previewRobots ?? "index,follow",
       ogType: "website",
-      ogImage: toAbsoluteUrl(origin, DEFAULT_OG_IMAGE_PATH),
-      structuredData: createCollectionPageStructuredData(origin, {
-        name: `${feed.category.name} | ${SITE_TITLE}`,
-        description: feed.category.description || `${feed.category.name} 갈래의 공개 글을 모아보는 페이지입니다.`,
-        path: `/category/${feed.category.slug}`,
+      ogImage: toAbsoluteUrl(canonicalOrigin, DEFAULT_OG_IMAGE_PATH),
+      status: 200,
+      structuredData: createCollectionPageStructuredData(canonicalOrigin, {
+        name: `${feed.category.name} | ${siteSettings.branding.siteTitle}`,
+        description,
+        path: withKoPath(`/category/${feed.category.slug}`),
         breadcrumbs: [
-          { name: SITE_TITLE, path: "/" },
-          { name: feed.category.name, path: `/category/${feed.category.slug}` },
+          { name: siteSettings.branding.siteTitle, path: withKoPath("/") },
+          { name: feed.category.name, path: withKoPath(`/category/${feed.category.slug}`) },
         ],
       }),
     };
@@ -303,24 +435,22 @@ async function buildMetadata(request, env) {
   if (route.kind === "tag") {
     const feed = await fetchPublicData(apiOrigin, `/api/public/tags/${encodeURIComponent(route.slug)}/posts`);
     const tagName = feed?.tag?.name ? `#${feed.tag.name}` : "태그";
-    const description = feed?.tag?.name
-      ? `#${feed.tag.name}로 묶인 공개 글 목록입니다.`
-      : "선택한 태그에 연결된 공개 글을 모아보는 페이지입니다.";
-
+    const description = feed?.tag?.name ? `#${feed.tag.name} 태그로 묶인 공개 글 목록입니다.` : "태그별 공개 글 목록입니다.";
     return {
-      title: `${tagName} | ${SITE_TITLE}`,
+      title: `${tagName} | ${siteSettings.branding.siteTitle}`,
       description,
-      canonicalUrl: toAbsoluteUrl(origin, `/tag/${route.slug}`),
-      robots: "noindex,follow",
+      canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath(`/tag/${route.slug}`)),
+      robots: previewRobots ?? "noindex,follow",
       ogType: "website",
-      ogImage: toAbsoluteUrl(origin, DEFAULT_OG_IMAGE_PATH),
-      structuredData: createWebPageStructuredData(origin, {
-        name: `${tagName} | ${SITE_TITLE}`,
+      ogImage: toAbsoluteUrl(canonicalOrigin, DEFAULT_OG_IMAGE_PATH),
+      status: 200,
+      structuredData: createWebPageStructuredData(canonicalOrigin, {
+        name: `${tagName} | ${siteSettings.branding.siteTitle}`,
         description,
-        path: `/tag/${route.slug}`,
+        path: withKoPath(`/tag/${route.slug}`),
         breadcrumbs: [
-          { name: SITE_TITLE, path: "/" },
-          { name: tagName, path: `/tag/${route.slug}` },
+          { name: siteSettings.branding.siteTitle, path: withKoPath("/") },
+          { name: tagName, path: withKoPath(`/tag/${route.slug}`) },
         ],
       }),
     };
@@ -331,64 +461,71 @@ async function buildMetadata(request, env) {
 
     if (!post) {
       return {
-        title: `글을 찾을 수 없음 | ${SITE_TITLE}`,
-        description: SITE_DESCRIPTION,
-        canonicalUrl: toAbsoluteUrl(origin, url.pathname),
+        title: `글을 찾을 수 없음 | ${siteSettings.branding.siteTitle}`,
+        description: "요청한 글을 찾지 못했습니다.",
+        canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath(`/post/${route.slug}`)),
         robots: "noindex,follow",
         ogType: "website",
-        ogImage: toAbsoluteUrl(origin, DEFAULT_OG_IMAGE_PATH),
-        structuredData: createWebPageStructuredData(origin, {
-          name: `글을 찾을 수 없음 | ${SITE_TITLE}`,
-          description: SITE_DESCRIPTION,
-          path: url.pathname,
-          breadcrumbs: [
-            { name: SITE_TITLE, path: "/" },
-            { name: "글", path: url.pathname },
-          ],
+        ogImage: toAbsoluteUrl(canonicalOrigin, DEFAULT_OG_IMAGE_PATH),
+        status: 404,
+        structuredData: createWebPageStructuredData(canonicalOrigin, {
+          name: `글을 찾을 수 없음 | ${siteSettings.branding.siteTitle}`,
+          description: "요청한 글을 찾지 못했습니다.",
+          path: withKoPath(`/post/${route.slug}`),
         }),
       };
     }
 
-    const description = post.excerpt || post.subtitle || buildExcerpt(post.content || post.title);
-    const breadcrumbs = [{ name: SITE_TITLE, path: "/" }];
+    const seoTitle = typeof post.seoTitle === "string" && post.seoTitle.trim() ? post.seoTitle.trim() : null;
+    const seoDescription =
+      typeof post.seoDescription === "string" && post.seoDescription.trim() ? post.seoDescription.trim() : null;
+    const description = seoDescription || post.excerpt || post.subtitle || buildExcerpt(post.content || post.title);
+    const breadcrumbs = [{ name: siteSettings.branding.siteTitle, path: withKoPath("/") }];
 
     if (post.category?.name && post.category?.slug) {
-      breadcrumbs.push({
-        name: post.category.name,
-        path: `/category/${post.category.slug}`,
-      });
+      breadcrumbs.push({ name: post.category.name, path: withKoPath(`/category/${post.category.slug}`) });
     }
 
-    breadcrumbs.push({
-      name: post.title,
-      path: `/post/${post.slug}`,
-    });
+    breadcrumbs.push({ name: post.title, path: withKoPath(`/post/${post.slug}`) });
 
     return {
-      title: `${post.title} | ${SITE_TITLE}`,
+      title: `${seoTitle || post.title} | ${siteSettings.branding.siteTitle}`,
       description,
-      canonicalUrl: toAbsoluteUrl(origin, `/post/${post.slug}`),
-      robots: "index,follow",
+      canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath(`/post/${post.slug}`)),
+      robots: previewRobots ?? "index,follow",
       ogType: "article",
-      ogImage: toAbsoluteUrl(origin, post.coverImage || DEFAULT_OG_IMAGE_PATH),
-      structuredData: createBlogPostingStructuredData(origin, {
-        title: post.title,
+      ogImage: toAbsoluteUrl(canonicalOrigin, post.coverImage || DEFAULT_OG_IMAGE_PATH),
+      status: 200,
+      structuredData: createBlogPostingStructuredData(canonicalOrigin, siteSettings, {
+        title: seoTitle || post.title,
         description,
-        path: `/post/${post.slug}`,
+        path: withKoPath(`/post/${post.slug}`),
         image: post.coverImage || DEFAULT_OG_IMAGE_PATH,
         publishedAt: post.publishedAt || post.createdAt,
         updatedAt: post.updatedAt,
         categoryName: post.category?.name || undefined,
         tags: Array.isArray(post.tags) ? post.tags.map((tag) => tag.name) : [],
+        authorName: "동그리",
+        publisherName: "동그리의 기록소",
+        publisherLogo: DEFAULT_OG_IMAGE_PATH,
         breadcrumbs,
       }),
     };
   }
 
   return {
-    ...getDefaultMetadata(origin, url.pathname),
-    canonicalUrl: toAbsoluteUrl(origin, url.pathname),
-    robots: "noindex,follow",
+    title: `페이지를 찾을 수 없음 | ${siteSettings.branding.siteTitle}`,
+    description: "요청한 페이지를 찾지 못했습니다.",
+    canonicalUrl: toAbsoluteUrl(canonicalOrigin, withKoPath("/404")),
+    robots: "noindex,nofollow",
+    ogType: "website",
+    ogImage: toAbsoluteUrl(canonicalOrigin, DEFAULT_OG_IMAGE_PATH),
+    status: 404,
+    structuredData: createWebPageStructuredData(canonicalOrigin, {
+      name: `페이지를 찾을 수 없음 | ${siteSettings.branding.siteTitle}`,
+      description: "요청한 페이지를 찾지 못했습니다.",
+      path: withKoPath("/404"),
+    }),
   };
 }
 
@@ -418,8 +555,7 @@ async function renderSeoShell(request, env) {
   const assetRequest = new Request(new URL("/", url), request);
   const shell = await env.ASSETS.fetch(assetRequest);
   const metadata = await buildMetadata(request, env);
-
-  return new HTMLRewriter()
+  const rewritten = new HTMLRewriter()
     .on("title", new TextHandler(metadata.title))
     .on('meta[name="description"]', new AttributeHandler("content", metadata.description))
     .on('meta[name="robots"]', new AttributeHandler("content", metadata.robots))
@@ -434,18 +570,24 @@ async function renderSeoShell(request, env) {
     .on('meta[name="twitter:image"]', new AttributeHandler("content", metadata.ogImage))
     .on("#structured-data", new TextHandler(JSON.stringify(metadata.structuredData)))
     .transform(shell);
+
+  const response = new Response(rewritten.body, {
+    status: metadata.status || 200,
+    headers: rewritten.headers,
+  });
+  response.headers.set("X-Robots-Tag", metadata.robots);
+  return response;
 }
 
 function shouldServeStaticAsset(pathname) {
-  return (
-    pathname.startsWith("/assets/") ||
-    /\.(?:css|js|mjs|map|png|jpg|jpeg|gif|svg|webp|avif|ico|woff|woff2|ttf|eot|txt)$/i.test(pathname)
-  );
+  return pathname.startsWith("/assets/") || /\.(?:css|js|mjs|map|png|jpg|jpeg|gif|svg|webp|avif|ico|woff|woff2|ttf|eot|txt)$/i.test(pathname);
 }
 
 function renderRobotsTxt(request) {
   const url = new URL(request.url);
-  const body = `User-agent: *\nAllow: /\n\nSitemap: ${toAbsoluteUrl(url.origin, "/sitemap.xml")}\n`;
+  const body = url.hostname.endsWith(".pages.dev")
+    ? "User-agent: *\nDisallow: /\n"
+    : `User-agent: *\nAllow: /\n\nSitemap: ${toAbsoluteUrl(PUBLIC_SITE_ORIGIN, "/sitemap.xml")}\n`;
 
   return new Response(body, {
     headers: {
@@ -461,9 +603,38 @@ export default {
     const pathname = url.pathname;
     const apiOrigin = resolveApiOrigin(env);
 
-    if (pathname === "/rss.xml" || pathname === "/sitemap.xml") {
-      const proxiedRequest = new Request(`${apiOrigin}${pathname}`, request);
-      return fetch(proxiedRequest);
+    if (pathname === "/") {
+      return Response.redirect(toAbsoluteUrl(PUBLIC_SITE_ORIGIN, withKoPath("/")), 301);
+    }
+
+    if (pathname === "/rss.xml") {
+      return Response.redirect(toAbsoluteUrl(PUBLIC_SITE_ORIGIN, withKoPath("/rss.xml")), 301);
+    }
+
+    if (pathname === "/feed.xml" || pathname === "/ko/feed.xml") {
+      return Response.redirect(toAbsoluteUrl(PUBLIC_SITE_ORIGIN, withKoPath("/rss.xml")), 301);
+    }
+
+    if (!pathname.startsWith(`${KO_BASE_PATH}/`)) {
+      if (pathname === "/about" || pathname === "/search") {
+        return Response.redirect(toAbsoluteUrl(PUBLIC_SITE_ORIGIN, withKoPath(pathname)), 301);
+      }
+
+      let legacyMatch = pathname.match(/^\/post\/([^/]+)\/?$/);
+      if (legacyMatch) return Response.redirect(toAbsoluteUrl(PUBLIC_SITE_ORIGIN, withKoPath(`/post/${legacyMatch[1]}`)), 301);
+
+      legacyMatch = pathname.match(/^\/category\/([^/]+)\/?$/);
+      if (legacyMatch) return Response.redirect(toAbsoluteUrl(PUBLIC_SITE_ORIGIN, withKoPath(`/category/${legacyMatch[1]}`)), 301);
+
+      legacyMatch = pathname.match(/^\/tag\/([^/]+)\/?$/);
+      if (legacyMatch) return Response.redirect(toAbsoluteUrl(PUBLIC_SITE_ORIGIN, withKoPath(`/tag/${legacyMatch[1]}`)), 301);
+    }
+
+    const resourcePath = pathname.startsWith(`${KO_BASE_PATH}/`) ? pathname.slice(KO_BASE_PATH.length) : pathname;
+
+    if (resourcePath === "/rss.xml" || resourcePath === "/feed.xml" || resourcePath === "/sitemap.xml") {
+      const upstreamPath = resourcePath === "/feed.xml" ? "/rss.xml" : resourcePath;
+      return fetch(new Request(`${apiOrigin}${upstreamPath}`, request));
     }
 
     if (pathname === "/robots.txt") {
@@ -481,3 +652,4 @@ export default {
     return env.ASSETS.fetch(request);
   },
 };
+

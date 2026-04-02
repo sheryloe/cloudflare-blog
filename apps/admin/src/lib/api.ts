@@ -7,12 +7,18 @@ import type {
   MediaAsset,
   Post,
   PostSummary,
+  RelatedLink,
+  SiteSettings,
   Tag,
   TaxonomyInput,
+  UpsertPostBySlugInput,
+  UpsertPostBySlugResult,
   UpdatePostInput,
 } from "@cloudflare-blog/shared";
 
-const ADMIN_TOKEN_STORAGE_KEY = "cloudflare_blog_admin_token";
+import { optimizeImageForUpload } from "./image-upload";
+
+const ADMIN_TOKEN_STORAGE_KEY = "donggeuri_admin_token";
 
 type LoginResult = {
   session: AdminSession;
@@ -40,7 +46,7 @@ function getStoredAdminToken() {
     return null;
   }
 
-  return window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+  return window.sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
 }
 
 function setStoredAdminToken(token: string) {
@@ -48,7 +54,7 @@ function setStoredAdminToken(token: string) {
     return;
   }
 
-  window.localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+  window.sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
 }
 
 export function clearStoredAdminToken() {
@@ -56,7 +62,7 @@ export function clearStoredAdminToken() {
     return;
   }
 
-  window.localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+  window.sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
 }
 
 export class ApiError extends Error {
@@ -71,7 +77,7 @@ export class ApiError extends Error {
 
 async function request<T>(
   path: string,
-  init: RequestInit & { json?: unknown } = {},
+  init: RequestInit & { json?: unknown; skipStoredToken?: boolean } = {},
 ): Promise<T> {
   const headers = new Headers(init.headers);
   let body = init.body;
@@ -81,7 +87,7 @@ async function request<T>(
     body = JSON.stringify(init.json);
   }
 
-  const token = getStoredAdminToken();
+  const token = init.skipStoredToken ? null : getStoredAdminToken();
 
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
@@ -121,8 +127,20 @@ export function login(credentials: LoginInput) {
   return request<LoginResult>("/api/admin/login", {
     method: "POST",
     json: credentials,
-  }).then((result) => {
-    setStoredAdminToken(result.token);
+    skipStoredToken: true,
+  }).then(async (result) => {
+    const cookieSession = await request<AdminSession>("/api/admin/session", {
+      skipStoredToken: true,
+    })
+      .then((session) => session.authenticated)
+      .catch(() => false);
+
+    if (cookieSession) {
+      clearStoredAdminToken();
+    } else {
+      setStoredAdminToken(result.token);
+    }
+
     return result.session;
   });
 }
@@ -130,6 +148,17 @@ export function login(credentials: LoginInput) {
 export function logout() {
   return request<{ loggedOut: true }>("/api/admin/logout", {
     method: "POST",
+  });
+}
+
+export function getAdminSiteSettings() {
+  return request<SiteSettings>("/api/admin/site-settings");
+}
+
+export function updateAdminSiteSettings(input: SiteSettings) {
+  return request<SiteSettings>("/api/admin/site-settings", {
+    method: "PUT",
+    json: input,
   });
 }
 
@@ -158,6 +187,13 @@ export function updateAdminPost(id: string, input: UpdatePostInput) {
 export function deleteAdminPost(id: string) {
   return request<{ id: string; deleted: boolean }>(`/api/admin/posts/${id}`, {
     method: "DELETE",
+  });
+}
+
+export function upsertAdminPostBySlugManual(input: UpsertPostBySlugInput) {
+  return request<UpsertPostBySlugResult>("/api/admin/posts/upsert-by-slug/manual", {
+    method: "POST",
+    json: input,
   });
 }
 
@@ -214,19 +250,35 @@ export function listMediaAssets() {
 }
 
 export function uploadMediaAsset(input: { file: File; postSlug?: string; altText?: string }) {
-  const formData = new FormData();
-  formData.set("file", input.file);
+  return optimizeImageForUpload(input.file).then((optimizedFile) => {
+    const formData = new FormData();
+    formData.set("file", optimizedFile, optimizedFile.name);
 
-  if (input.postSlug) {
-    formData.set("postSlug", input.postSlug);
-  }
+    if (input.postSlug) {
+      formData.set("postSlug", input.postSlug);
+    }
 
-  if (input.altText) {
-    formData.set("altText", input.altText);
-  }
+    if (input.altText) {
+      formData.set("altText", input.altText);
+    }
 
-  return request<MediaAsset>("/api/admin/media", {
+    return request<MediaAsset>("/api/admin/media", {
+      method: "POST",
+      body: formData,
+    });
+  });
+}
+
+export function previewAdminRelatedLink(url: string) {
+  return request<RelatedLink>("/api/admin/link-preview", {
     method: "POST",
-    body: formData,
+    json: { url },
+  });
+}
+
+export function updateMediaAssetMeta(id: string, input: { altText?: string | null }) {
+  return request<MediaAsset>(`/api/admin/media/${id}`, {
+    method: "PUT",
+    json: input,
   });
 }

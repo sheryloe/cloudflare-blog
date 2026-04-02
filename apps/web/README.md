@@ -14,5 +14,6 @@ Cloudflare Pages public frontend for the editorial blog experience.
 - This app owns only the public routes.
 - `VITE_ADMIN_APP_URL` is optional and is only used for the external admin link.
 - `VITE_GA_MEASUREMENT_ID` is optional and enables GA4 when set.
+- giscus comments are optional and only render on post detail routes when all giscus env vars are configured.
 - Point `VITE_API_BASE_URL` at the Worker deployment, not at the Pages app itself.
-- RSS and sitemap are served by the Worker, and the public app links to those Worker endpoints.
+- RSS/feed/sitemap XML are served by the Worker, and the public app links to those Worker endpoints.

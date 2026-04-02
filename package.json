@@ -2,12 +2,42 @@
   "name": "cloudflare-blog-template",
   "private": true,
   "version": "0.1.0",
+  "keywords": [
+    "cloudflare-workers",
+    "cloudflare-pages",
+    "blog-template",
+    "blog-automation",
+    "seo",
+    "ctr-optimization",
+    "monetization-blog",
+    "pnpm-workspace",
+    "react",
+    "typescript"
+  ],
   "packageManager": "pnpm@10.8.1",
   "scripts": {
     "build": "corepack pnpm -r --if-present run build",
     "dev:admin": "corepack pnpm --filter @cloudflare-blog/admin dev",
     "dev:api": "corepack pnpm --filter @cloudflare-blog/api dev",
+    "dev:all": "concurrently \"corepack pnpm dev:blog\" \"corepack pnpm dev:editor\"",
+    "dev:blog": "corepack pnpm --filter @cloudflare-blog/blog-web dev",
+    "dev:editor": "corepack pnpm --filter @cloudflare-blog/editor-local dev",
     "dev:web": "corepack pnpm --filter @cloudflare-blog/web dev",
+    "build:blog": "corepack pnpm --filter @cloudflare-blog/blog-web build",
+    "deploy:blog": "corepack pnpm --filter @cloudflare-blog/blog-web deploy",
+    "validate:content": "tsx scripts/validate-content.ts",
+    "audit:content": "tsx scripts/content-audit.ts",
+    "check:boundaries": "tsx scripts/check-import-boundaries.ts",
+    "automation:gpt-publish": "tsx scripts/automation/gpt-publish.ts",
+    "seed:demo": "powershell -ExecutionPolicy Bypass -File ./scripts/seed-demo-content.ps1",
+    "seed:initial": "powershell -ExecutionPolicy Bypass -File ./scripts/seed-initial-content.ps1",
+    "cleanup:legacy": "powershell -ExecutionPolicy Bypass -File ./scripts/prune-legacy-content.ps1",
     "typecheck": "corepack pnpm -r --if-present run typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "fast-glob": "^3.3.3",
+    "gray-matter": "^4.0.3",
+    "tsx": "^4.19.4"
   }
 }

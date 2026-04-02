@@ -1,0 +1,166 @@
+﻿<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Command Examples</title>
+    <style>
+      :root {
+        --bg: #f2f6fc;
+        --surface: #ffffff;
+        --line: #dbe5f2;
+        --text: #122037;
+        --muted: #4e5f7a;
+        --accent: #0d63d8;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        width: min(1100px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 32px 0 40px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 14px;
+      }
+      h1 {
+        margin: 0 0 8px;
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 20px;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      code,
+      pre {
+        font-family: Consolas, "Courier New", monospace;
+      }
+      pre {
+        margin: 10px 0 0;
+        border-radius: 12px;
+        background: #0d1728;
+        color: #d7e3f7;
+        padding: 14px;
+        overflow-x: auto;
+      }
+      .base {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #f8fbff;
+        color: #1f3557;
+      }
+      .chip {
+        display: inline-block;
+        margin-right: 8px;
+        margin-bottom: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #e8f1ff;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <section class="card">
+        <h1>API Command Examples</h1>
+        <p>템플릿 기준 실전 검증용 cURL 명령 모음입니다. 운영 전 private 저장소 값으로 교체하세요.</p>
+        <div class="base">
+          <div><code>BASE_URL=http://127.0.0.1:8787</code></div>
+          <div><code>AUTOMATION_KEY=replace-with-real-key</code></div>
+          <div><code>INTEGRATION_TOKEN=replace-with-real-token</code></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>1) Health / Public</h2>
+        <span class="chip">No Auth</span>
+        <pre><code>curl -s "$BASE_URL/health"
+curl -s "$BASE_URL/api/public/posts"
+curl -s "$BASE_URL/api/public/posts/top?limit=5"
+curl -s "$BASE_URL/api/public/search?q=cloudflare"
+curl -s "$BASE_URL/api/public/categories"
+curl -s "$BASE_URL/api/public/site-settings"
+curl -s "$BASE_URL/rss.xml"
+curl -s "$BASE_URL/sitemap.xml"</code></pre>
+      </section>
+
+      <section class="card">
+        <h2>2) Admin Login / Session</h2>
+        <span class="chip">Session Cookie</span>
+        <pre><code>curl -i -c cookie.txt \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"change-me"}' \
+  "$BASE_URL/api/admin/login"
+
+curl -s -b cookie.txt "$BASE_URL/api/admin/session"
+curl -s -b cookie.txt "$BASE_URL/api/admin/posts"</code></pre>
+      </section>
+
+      <section class="card">
+        <h2>3) Admin Post Upsert (Automation)</h2>
+        <span class="chip">x-automation-key</span>
+        <pre><code>curl -s -X POST \
+  -H "Content-Type: application/json" \
+  -H "x-automation-key: $AUTOMATION_KEY" \
+  -d '{
+    "title":"템플릿 자동화 게시글",
+    "slug":"template-automation-post",
+    "content":"자동화 업서트 테스트 본문",
+    "status":"draft"
+  }' \
+  "$BASE_URL/api/admin/posts/upsert-by-slug"</code></pre>
+      </section>
+
+      <section class="card">
+        <h2>4) Blogger-Compatible API</h2>
+        <span class="chip">x-automation-key or Session</span>
+        <pre><code>curl -s \
+  -H "x-automation-key: $AUTOMATION_KEY" \
+  "$BASE_URL/api/blogger/v3/blogs/self/posts?maxResults=10&status=all"
+
+curl -s -X POST \
+  -H "Content-Type: application/json" \
+  -H "x-automation-key: $AUTOMATION_KEY" \
+  -d '{
+    "title":"Blogger 호환 포스트",
+    "content":"Blogger API 호환 경로 테스트",
+    "labels":["automation","seo"]
+  }' \
+  "$BASE_URL/api/blogger/v3/blogs/self/posts"</code></pre>
+      </section>
+
+      <section class="card">
+        <h2>5) Integrations API</h2>
+        <span class="chip">Integration Auth Required</span>
+        <pre><code>curl -s \
+  -H "Authorization: Bearer $INTEGRATION_TOKEN" \
+  "$BASE_URL/api/integrations/posts"
+
+curl -s \
+  -H "Authorization: Bearer $INTEGRATION_TOKEN" \
+  "$BASE_URL/api/integrations/prompt-catalog"
+
+curl -s \
+  -H "Authorization: Bearer $INTEGRATION_TOKEN" \
+  "$BASE_URL/api/integrations/automation-plan?recent=true&limit=20"</code></pre>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,84 +1,184 @@
-# Cloudflare Blog Template
+﻿# DonggriArchive Cloudflare Blog Template
 
-Cloudflare Pages, Workers, D1, R2를 바탕으로 공개 블로그, 관리자 앱, API를 분리해 운영할 수 있게 만든 재사용용 템플릿 저장소입니다.
+DonggriArchive 기반 구조를 템플릿으로 정리한 공개 저장소입니다.  
+개인/운영 정보는 제거했고, 템플릿 공유와 GitHub Pages 소개 페이지에 바로 사용할 수 있습니다.
 
-- 저장소: `https://github.com/sheryloe/cloudflare-blog`
+- Repository: [https://github.com/sheryloe/cloudflare-blog](https://github.com/sheryloe/cloudflare-blog)
 
-## 이 저장소의 역할
+---
 
-- 이 repo는 공개용 뼈대입니다.
-- 개인 도메인, Search Console 인증 태그, GA 측정 ID, 실제 Cloudflare 리소스 이름은 넣지 않습니다.
-- 실제 배포는 이 repo를 가져와 별도 비공개 저장소를 만든 뒤, 그 private repo에서 운영값을 넣는 흐름을 권장합니다.
+## 1. 템플릿 미리보기
 
-## 추천 워크플로우
+> 아래 이미지는 루트 `index.html`을 파트별로 캡처한 화면입니다.
 
-1. 이 public repo를 로컬로 내려받습니다.
-2. GitHub에 새 private repository를 만듭니다.
-3. 이 코드베이스를 새 private repo에 push 합니다.
-4. private repo에서 도메인, 인증 메타, 분석 태그, 콘텐츠를 추가합니다.
-5. Cloudflare Pages는 private repo에 연결해서 배포합니다.
+### Hero
+![Hero](./assets/screenshots/part-hero.png)
 
-이렇게 하면 템플릿 코드와 실제 운영 블로그를 분리할 수 있고, 실수로 개인 콘텐츠나 운영 설정을 공개 저장소에 올리는 사고를 줄일 수 있습니다.
+### Structure
+![Structure](./assets/screenshots/part-structure.png)
 
-## 워크스페이스 구성
+### Features
+![Features](./assets/screenshots/part-features.png)
 
-- `apps/web`: 공개 블로그 프런트엔드
-- `apps/admin`: 관리자 앱
-- `apps/api`: D1/R2 바인딩을 사용하는 Worker API
-- `packages/shared`: 공용 타입
-- `docs`: 구조 설명과 소개 문서
-- `wiki`: 작업 메모와 로드맵
+### Workflow
+![Workflow](./assets/screenshots/part-workflow.png)
 
-## 보안 전제
+### Topics
+![Topics](./assets/screenshots/part-topics.png)
 
-- 관리자 세션은 HTTP-only cookie 기준입니다.
-- 같은 eTLD+1 아래에서 Public/Admin/API를 분리하는 배포 모델을 권장합니다.
-- Worker CORS는 허용 목록 기반으로 동작합니다.
+### Full Page
+![Full Page](./assets/screenshots/full-page.png)
 
-## 포함된 기능
+---
 
-- Public posts/categories/tags/search 조회
-- Admin login/logout/session
-- Admin posts CRUD
-- Admin media CRUD
-- Admin categories/tags CRUD
-- Worker RSS / sitemap XML
-- Worker asset proxy (`/assets/*`)
+## 2. 포함된 실제 템플릿 구성
 
-## 로컬 실행
+```text
+cloudflare-blog/
+├─ apps/
+│  ├─ web/            # 공개 블로그 프론트엔드
+│  ├─ admin/          # 관리자 콘솔
+│  ├─ api/            # Cloudflare Worker API
+│  ├─ blog-web/       # 신규 웹 앱 라인
+│  └─ editor-local/   # 로컬 콘텐츠 편집 라인
+├─ packages/
+│  └─ shared/         # 공통 타입/유틸
+├─ docs/              # 운영 문서
+├─ scripts/           # 시드/검증/자동화 스크립트
+├─ functions/         # 배포 보조 함수
+├─ index.html         # GitHub Pages 랜딩
+└─ README.md
+```
+
+---
+
+## 3. 포지셔닝 (자동화 + SEO + CTR)
+
+이 템플릿은 단순 블로그 스켈레톤이 아니라, **자동화 운영형 수익형 블로그** 구조를 전제로 설계했습니다.
+
+- 자동화 게시 파이프라인: `admin upsert-by-slug`, `blogger compat`, `integrations`
+- SEO 기본기: sitemap/RSS/metadata/slug/카테고리·태그 구조
+- CTR 관점: 제목/요약/커버 이미지/관련 링크를 API 레벨에서 일관 관리
+- 운영 안정성: CORS allowlist, rate-limit, 세션/자동화 키 분리
+- 템플릿-운영 분리: 공개 저장소는 코드만, 운영값은 private 저장소에서 관리
+
+---
+
+## 4. 템플릿 공개/운영 분리 원칙
+
+### 공개 저장소(public) 유지 항목
+
+- 앱 구조/코드/문서
+- `.env.example`, `.dev.vars.example`
+- README, 소개 페이지, 예시 스크린샷
+
+### 비공개 저장소(private)로 분리할 항목
+
+- 실제 도메인/서브도메인
+- Cloudflare account/project/resource 식별자
+- D1/R2 실제 이름 및 ID
+- API Token, OAuth Secret
+- 실 운영 `.env`, `.dev.vars`
+- 분석/검증 ID (GA, Search Console, Naver 등)
+
+---
+
+## 5. WSL 기준 실행 방법
+
+### 환경
+
+- WSL2 (Ubuntu)
+- Node.js 20+
+- Corepack 활성화
+- pnpm 10+
+- PowerShell 7 (`pwsh`)
+
+### 실행
 
 ```bash
+cd /mnt/d/Donggri_Platform/cloudflare-blog
+corepack enable
 pnpm install
 pwsh ./scripts/setup-local-dev.ps1
-pnpm --filter @cloudflare-blog/api exec wrangler d1 migrations apply cloudflare-blog --local
+
 pnpm dev:api
 pnpm dev:web
 pnpm dev:admin
 ```
 
-- 로컬 설정 예제는 `apps/api/.dev.vars.example`, `apps/web/.env.example`, `apps/admin/.env.example`를 참고합니다.
-- `apps/api/wrangler.toml`은 템플릿용 예시값이므로, 실제 배포 전에는 private repo에서 프로젝트 이름과 리소스 ID를 교체해야 합니다.
+### 선택 실행 (신규 라인)
 
-## SEO / Analytics 원칙
+```bash
+cd /mnt/d/Donggri_Platform/cloudflare-blog
+pnpm dev:blog
+pnpm dev:editor
+```
 
-- 공개 웹은 Cloudflare Pages advanced mode `_worker.js`로 라우트별 메타데이터를 보강합니다.
-- 공개 웹 빌드 환경 변수 `VITE_GA_MEASUREMENT_ID`에 `G-XXXXXXXXXX` 형식의 GA4 측정 ID를 넣으면 Google tag가 활성화됩니다.
-- 측정 ID가 비어 있으면 Google Analytics 코드는 로드되지 않습니다.
-- Search Console / Naver 사이트 인증 메타는 public template에 기본 포함하지 않습니다.
-- 사이트 검증 메타, 실제 canonical 도메인, 운영용 OG 이미지는 private repo에서 넣는 것을 권장합니다.
+### Docker 백그라운드 실행 (`testdocker`)
 
-## Private Repo에서 채울 것
+```bash
+cd /mnt/d/Donggri_Platform/cloudflare-blog/testdocker
+docker compose -f compose.yaml up -d --build
+```
 
-- 실제 도메인과 canonical URL
-- Google / Naver 사이트 검증 메타
-- Google Analytics 측정 ID
-- Cloudflare Pages / Workers 프로젝트 이름
-- D1 / R2 실제 리소스 이름과 ID
-- 실제 글 콘텐츠, 카테고리, 태그, 미디어
+접속:
 
-## 다음 확장 아이디어
+```text
+http://localhost:8090
+```
 
-- 예약 발행과 draft 상태
-- 관리자 감사 로그와 역할 분리
-- 사이트 설정 UI 또는 환경 변수 기반 브랜딩
-- 대표 글 큐레이션과 커스텀 OG 이미지
+---
+
+## 6. GitHub Template + Pages 설정
+
+### GitHub Template
+
+1. 저장소 `Settings` → `General`
+2. `Template repository` 활성화
+3. 사용자들이 `Use this template`로 새 저장소 생성
+
+### GitHub Pages
+
+1. 루트 `index.html` 유지
+2. `Settings` → `Pages`
+3. Source: `Deploy from a branch`
+4. Branch: `main` / `(root)`
+5. 배포 URL 생성 확인
+
+---
+
+## 7. Repository Topics (태그) 권장값
+
+아래 토픽을 `https://github.com/sheryloe/cloudflare-blog`에 설정하면 템플릿 검색성과 설명력이 좋아집니다.
+정리 파일: `.github/repository-topics.md`
+
+- `cloudflare-workers`: API 레이어가 Worker 기반
+- `cloudflare-pages`: 정적 웹/관리자 페이지 배포
+- `d1`: 게시글/분류 데이터 스토리지
+- `r2`: 미디어 파일 스토리지
+- `blog-template`: 재사용 목적의 블로그 템플릿
+- `pnpm-workspace`: 모노레포 패키지 구성
+- `typescript`: 타입 안정성 기반 코드
+- `react`: web/admin UI 레이어
+- `blog-automation`: 자동화 게시 파이프라인
+- `seo`: 검색엔진 최적화 기반 구조
+- `ctr-optimization`: 클릭률 최적화 운영 모델
+- `monetization-blog`: 수익형 블로그 운영 지향
+
+---
+
+## 8. API 문서
+
+- 메인 API 문서: `docs/worker_api.md`
+- cURL 예시: `docs/api-command-examples.html`
+- 앱별 API 개요: `apps/api/README.md`
+
+---
+
+## 9. 템플릿 복제 후 체크리스트
+
+1. private 저장소 생성 후 운영값 주입
+2. 실 리소스(D1/R2/Pages/Workers) 새로 생성
+3. `.env` / `.dev.vars` 커밋 금지 확인
+4. 운영 배포는 private 저장소에서만 수행
+5. 공개 저장소에는 템플릿 코드만 유지

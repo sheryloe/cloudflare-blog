@@ -8,6 +8,7 @@ MVP:
 - /about
 - /search
 - /rss.xml
+- /feed.xml
 - /sitemap.xml
 
 Future:

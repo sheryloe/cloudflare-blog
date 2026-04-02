@@ -1,8 +1,11 @@
 import { RouterProvider, createBrowserRouter, Navigate } from "react-router-dom";
 
 import { AdminLayout, LoginPage } from "./admin-layout";
-import { CategoriesPage, DashboardPage, MediaPage, PostEditorPage, PostsPage, TagsPage } from "./admin-pages";
 import { AuthProvider, RequireAdmin } from "./auth";
+import { CategoriesPage, DashboardPage, MediaPage, PostsPage, TagsPage } from "./admin-overview-pages";
+import { AutomationPage } from "./automation-page";
+import { PostEditorPage } from "./post-editor-page";
+import { SiteSettingsPage } from "./site-settings-page";
 
 const router = createBrowserRouter([
   {
@@ -22,8 +25,10 @@ const router = createBrowserRouter([
       { path: "/posts/new", element: <PostEditorPage /> },
       { path: "/posts/:id/edit", element: <PostEditorPage /> },
       { path: "/media", element: <MediaPage /> },
+      { path: "/settings", element: <SiteSettingsPage /> },
       { path: "/categories", element: <CategoriesPage /> },
-      { path: "/tags", element: <TagsPage /> }
+      { path: "/tags", element: <TagsPage /> },
+      { path: "/automation", element: <AutomationPage /> }
     ]
   },
   {

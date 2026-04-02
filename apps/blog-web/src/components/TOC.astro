@@ -1,0 +1,16 @@
+---
+const { headings = [] } = Astro.props as { headings?: Array<{ depth: number; slug: string; text: string }> };
+const filtered = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 3);
+---
+{filtered.length ? (
+  <aside class="toc">
+    <p class="toc__title">On this page</p>
+    <ul>
+      {filtered.map((heading) => (
+        <li class:list={[heading.depth === 3 && "toc__child"]}>
+          <a href={`#${heading.slug}`}>{heading.text}</a>
+        </li>
+      ))}
+    </ul>
+  </aside>
+) : null}

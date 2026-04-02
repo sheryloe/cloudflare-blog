@@ -1,0 +1,43 @@
+---
+import type { BlogPostEntry } from "../lib/content";
+import BaseLayout from "./BaseLayout.astro";
+import LangSwitcher from "../components/LangSwitcher.astro";
+import TagList from "../components/TagList.astro";
+import TOC from "../components/TOC.astro";
+
+const {
+  post,
+  headings,
+  translations,
+} = Astro.props as {
+  post: BlogPostEntry;
+  headings: Array<{ depth: number; slug: string; text: string }>;
+  translations: Partial<Record<"ko" | "en", { path: string }>>;
+};
+---
+<BaseLayout
+  title={`${post.data.title} | Donggri Archive`}
+  description={post.data.description}
+  pathname={`/${post.data.lang}/posts/${post.slug}/`}
+  alternateLinks={Object.entries(translations).map(([lang, item]) => ({ lang, pathname: item.path }))}
+>
+  <article class="post-layout">
+    <header class="post-layout__hero">
+      <div class="post-layout__meta">
+        <span>{post.data.category}</span>
+        <span>{post.data.publishedAt}</span>
+      </div>
+      <h1>{post.data.title}</h1>
+      <p>{post.data.description}</p>
+      <LangSwitcher currentLang={post.data.lang} translations={translations} />
+      <img class="post-layout__cover" src={post.data.coverImage} alt={post.data.coverAlt} loading="eager" />
+      <TagList lang={post.data.lang} tags={post.data.tags} />
+    </header>
+    <div class="post-layout__body">
+      <div class="post-layout__content">
+        <slot />
+      </div>
+      <TOC headings={headings} />
+    </div>
+  </article>
+</BaseLayout>

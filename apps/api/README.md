@@ -1,35 +1,53 @@
-# API Worker
+﻿# Cloudflare Worker API
 
-Cloudflare Worker API for public content delivery and admin operations.
+DonggriArchive 템플릿의 API 서버입니다.  
+Public 콘텐츠 조회, Admin 콘텐츠 관리, Blogger 호환 자동화, Integrations API를 제공합니다.
 
-## Run
+## Local Run (WSL)
 
-- Copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars`, or run `pwsh ./scripts/setup-local-dev.ps1` from the repo root.
-- Apply the local schema once before `wrangler dev --local`:
-  `pnpm --filter @cloudflare-blog/api exec wrangler d1 migrations apply cloudflare-blog --local`
-- `pnpm --filter @cloudflare-blog/api dev`
-- `pnpm --filter @cloudflare-blog/api build`
+```bash
+cd /mnt/d/Donggri_Platform/cloudflare-blog
+pnpm install
+pwsh ./scripts/setup-local-dev.ps1
+pnpm --filter @cloudflare-blog/api exec wrangler d1 migrations apply cloudflare-blog --local
+pnpm --filter @cloudflare-blog/api dev
+```
 
-## Required Variables
+로컬 문서:
+
+```text
+http://127.0.0.1:8787/__api
+```
+
+## Required Env
 
 - `PUBLIC_APP_ORIGIN`
 - `ADMIN_APP_ORIGIN`
+- `BLOGGERGENT_ALLOWED_ORIGIN`
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD_HASH`
 - `JWT_SECRET`
 - `R2_PUBLIC_BASE_URL`
+- `AUTOMATION_API_KEY`
+- `AUTOMATION_ALLOWED_IPS`
 
-## Public Endpoints
+## Route Groups
 
-- `/api/public/posts`
-- `/api/public/search?q=cloudflare`
-- `/rss.xml`
-- `/sitemap.xml`
-- `/assets/*`
+- `/health`
+- `/api/public/*`
+- `/api/admin/*`
+- `/api/blogger/v3/*`
+- `/api/integrations/*`
+- `/rss.xml`, `/feed.xml`, `/sitemap.xml`, `/assets/*`
 
-## Security Notes
+## Auth Rules
 
-- CORS is allowlist-based and does not reflect arbitrary request origins.
-- Public routes allow the public and admin frontend origins.
-- Admin routes allow only the admin frontend origin.
-- Admin sessions use a same-site cookie and are intended for deployments under the same eTLD+1.
+- Public: 인증 없음
+- Admin: `POST /api/admin/login` 후 세션 쿠키 필요
+- Blogger: 세션 쿠키 또는 `x-automation-key`
+- Integrations: Integration 인증 헤더(코드의 `requireIntegrationAuth`) 필요
+
+## Reference
+
+- 상세 엔드포인트 문서: `docs/worker_api.md`
+- 명령 예시 페이지: `docs/api-command-examples.html`

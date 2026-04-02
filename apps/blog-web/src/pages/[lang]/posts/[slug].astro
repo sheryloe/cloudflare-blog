@@ -1,0 +1,26 @@
+---
+import { getCollection } from "astro:content";
+import PostLayout from "../../../layouts/PostLayout.astro";
+import { getTranslations, postPath, type BlogPostEntry } from "../../../lib/content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts");
+  return posts.map((post: BlogPostEntry) => ({
+    params: {
+      lang: post.data.lang,
+      slug: post.slug,
+    },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props as { post: BlogPostEntry };
+const { Content, headings } = await post.render();
+const translations = await getTranslations(post.data.groupId);
+const translationPaths = Object.fromEntries(
+  Object.entries(translations).map(([lang, entry]) => [lang, entry ? { path: postPath(entry) } : undefined]),
+);
+---
+<PostLayout post={post} headings={headings} translations={translationPaths}>
+  <Content />
+</PostLayout>

@@ -1,0 +1,23 @@
+---
+import { buildCanonicalUrl, buildHreflangLinks } from "@cloudflare-blog/seo-utils";
+
+const {
+  title,
+  description,
+  pathname,
+  alternateLinks = [],
+} = Astro.props as {
+  title: string;
+  description: string;
+  pathname: string;
+  alternateLinks?: Array<{ lang: string; pathname: string }>;
+};
+
+const siteUrl = Astro.site?.toString() ?? "http://127.0.0.1:4321";
+const canonical = buildCanonicalUrl(siteUrl, pathname);
+const hreflangs = buildHreflangLinks(siteUrl, alternateLinks);
+---
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{hreflangs.map((item) => <link rel="alternate" hreflang={item.lang} href={item.href} />)}

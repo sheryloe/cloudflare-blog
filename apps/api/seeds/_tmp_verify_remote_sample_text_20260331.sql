@@ -1,0 +1,1 @@
+SELECT "slug", "title", "excerpt" FROM "posts" WHERE "slug" IN ('manual-upsert-check', 'auto-upsert-check', 'automation-test-post') ORDER BY "slug" ASC;

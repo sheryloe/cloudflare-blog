@@ -1,0 +1,81 @@
+name: GPT Automation Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "글 주제"
+        required: true
+        type: string
+      category_slug:
+        description: "카테고리 slug (선택)"
+        required: false
+        default: ""
+        type: string
+      tone:
+        description: "문체/톤"
+        required: false
+        default: "전문적이지만 읽기 쉬운 설명형 톤"
+        type: string
+      keywords_csv:
+        description: "핵심 키워드 (쉼표 구분)"
+        required: false
+        default: ""
+        type: string
+      slug_hint:
+        description: "슬러그 힌트"
+        required: false
+        default: ""
+        type: string
+      publish:
+        description: "즉시 발행 여부"
+        required: false
+        default: true
+        type: boolean
+      references_csv:
+        description: "추가 참고 링크 URL (쉼표 구분)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  generate-and-upsert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.8.1
+
+      - name: Install dependencies
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+
+      - name: Generate with GPT and upsert
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+          AUTOMATION_API_URL: ${{ secrets.AUTOMATION_API_URL }}
+          AUTOMATION_API_KEY: ${{ secrets.AUTOMATION_API_KEY }}
+        run: |
+          corepack pnpm automation:gpt-publish -- \
+            --topic "${{ inputs.topic }}" \
+            --categorySlug "${{ inputs.category_slug }}" \
+            --tone "${{ inputs.tone }}" \
+            --primaryKeywords "${{ inputs.keywords_csv }}" \
+            --slugHint "${{ inputs.slug_hint }}" \
+            --publish "${{ inputs.publish }}" \
+            --references "${{ inputs.references_csv }}"

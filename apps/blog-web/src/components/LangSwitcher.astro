@@ -1,0 +1,15 @@
+---
+const { currentLang, translations } = Astro.props as {
+  currentLang: "ko" | "en";
+  translations: Partial<Record<"ko" | "en", { path: string }>>;
+};
+---
+<nav class="lang-switcher" aria-label="언어 전환">
+  {(["ko", "en"] as const).map((lang) =>
+    translations[lang] ? (
+      <a class:list={["lang-switcher__link", currentLang === lang && "is-active"]} href={translations[lang]!.path}>
+        {lang.toUpperCase()}
+      </a>
+    ) : null,
+  )}
+</nav>

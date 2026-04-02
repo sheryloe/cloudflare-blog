@@ -21,8 +21,18 @@ function stripMarkdown(value: string) {
     .trim();
 }
 
+const PUBLIC_CONTENT_BASE_PATH = "/ko";
+
 function toAbsoluteUrl(siteUrl: string, path: string) {
   return new URL(path, ensureSiteOrigin(siteUrl)).toString();
+}
+
+function toPublicContentPath(path: string) {
+  if (path === "/") {
+    return `${PUBLIC_CONTENT_BASE_PATH}/`;
+  }
+
+  return `${PUBLIC_CONTENT_BASE_PATH}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export function ensureSiteOrigin(value: string) {
@@ -46,8 +56,8 @@ export function renderRssXml(args: {
   const siteUrl = ensureSiteOrigin(args.siteUrl);
   const items = args.posts
     .map((post) => {
-      const link = toAbsoluteUrl(siteUrl, `/post/${post.slug}`);
-      const description = post.excerpt ?? post.subtitle ?? `${post.title} 글 요약`;
+      const link = toAbsoluteUrl(siteUrl, toPublicContentPath(`/post/${post.slug}`));
+      const description = post.seoDescription ?? post.excerpt ?? post.subtitle ?? `${post.title} 요약`;
       const publishedAt = toLastModified(post);
 
       return [
@@ -70,7 +80,7 @@ export function renderRssXml(args: {
     '<rss version="2.0">',
     "  <channel>",
     `    <title>${escapeXml(args.title)}</title>`,
-    `    <link>${escapeXml(siteUrl)}</link>`,
+    `    <link>${escapeXml(toAbsoluteUrl(siteUrl, toPublicContentPath("/")))}</link>`,
     `    <description>${escapeXml(args.description)}</description>`,
     `    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>`,
     items,
@@ -80,14 +90,26 @@ export function renderRssXml(args: {
 }
 
 function renderSitemapEntry(loc: string, lastmod?: string | null) {
+  const safeLastmod = lastmod ? formatSitemapDate(lastmod) : null;
+
   return [
     "  <url>",
     `    <loc>${escapeXml(loc)}</loc>`,
-    lastmod ? `    <lastmod>${escapeXml(new Date(lastmod).toISOString())}</lastmod>` : null,
+    safeLastmod ? `    <lastmod>${escapeXml(safeLastmod)}</lastmod>` : null,
     "  </url>",
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function formatSitemapDate(value: string) {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.toISOString();
 }
 
 export function renderSitemapXml(args: {
@@ -96,13 +118,14 @@ export function renderSitemapXml(args: {
   posts: PostSummary[];
 }) {
   const siteUrl = ensureSiteOrigin(args.siteUrl);
+  const staticPagePaths = ["/about", "/privacy", "/contact", "/terms", "/disclaimer", "/editorial-policy"] as const;
   const entries = [
-    renderSitemapEntry(toAbsoluteUrl(siteUrl, "/")),
-    renderSitemapEntry(toAbsoluteUrl(siteUrl, "/about")),
+    renderSitemapEntry(toAbsoluteUrl(siteUrl, toPublicContentPath("/"))),
+    ...staticPagePaths.map((path) => renderSitemapEntry(toAbsoluteUrl(siteUrl, toPublicContentPath(path)))),
     ...args.categories.map((category) =>
-      renderSitemapEntry(toAbsoluteUrl(siteUrl, `/category/${category.slug}`), category.updatedAt ?? category.createdAt),
+      renderSitemapEntry(toAbsoluteUrl(siteUrl, toPublicContentPath(`/category/${category.slug}`)), category.updatedAt ?? category.createdAt),
     ),
-    ...args.posts.map((post) => renderSitemapEntry(toAbsoluteUrl(siteUrl, `/post/${post.slug}`), toLastModified(post))),
+    ...args.posts.map((post) => renderSitemapEntry(toAbsoluteUrl(siteUrl, toPublicContentPath(`/post/${post.slug}`)), toLastModified(post))),
   ].join("\n");
 
   return [

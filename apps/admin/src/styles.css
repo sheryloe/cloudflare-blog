@@ -135,4 +135,90 @@
   .field-label {
     @apply mb-2 block text-sm font-semibold text-[var(--color-ink)];
   }
+
+  .field-hint {
+    @apply mt-2 text-sm leading-6 text-[var(--color-soft-ink)];
+  }
+
+  .markdown-editor-shell {
+    @apply overflow-hidden rounded-[24px] border border-black/8 bg-white shadow-sm;
+  }
+
+  .editor-mode-tabs {
+    @apply flex items-center gap-2 border-b border-black/8 bg-[rgba(246,248,251,0.92)] px-4 py-3;
+  }
+
+  .editor-mode-tab {
+    @apply rounded-full border border-transparent px-3 py-1.5 text-sm font-medium text-[var(--color-soft-ink)] transition hover:border-black/8 hover:bg-white hover:text-[var(--color-ink)];
+  }
+
+  .editor-mode-tab[data-active="true"] {
+    @apply border-black/10 bg-white text-[var(--color-ink)] shadow-sm;
+  }
+
+  .markdown-editor-shell .toastui-editor-defaultUI {
+    border: 0;
+  }
+
+  .markdown-editor-shell .toastui-editor-toolbar {
+    border-bottom-color: rgba(19, 32, 51, 0.08);
+    background: rgba(246, 248, 251, 0.92);
+  }
+
+  .markdown-editor-shell .toastui-editor-md-container,
+  .markdown-editor-shell .toastui-editor-ww-container {
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .markdown-editor-shell .toastui-editor-mode-switch {
+    border-top-color: rgba(19, 32, 51, 0.08);
+    background: rgba(246, 248, 251, 0.92);
+  }
+
+  .markdown-editor-shell .toastui-editor-md-preview,
+  .markdown-editor-shell .toastui-editor-md-tab-container,
+  .markdown-editor-shell .toastui-editor-contents {
+    font-size: 0.97rem;
+    line-height: 1.8;
+  }
+
+  .editor-html-source {
+    @apply min-h-[620px] w-full resize-y border-0 bg-white/92 px-6 py-5 font-mono text-[0.95rem] leading-7 text-[var(--color-ink)] outline-none;
+  }
+
+  .media-cover-card {
+    @apply overflow-hidden rounded-[20px] border border-black/8 bg-[var(--color-paper-muted)];
+  }
+
+  .media-cover-card__image {
+    @apply h-44 w-full object-cover;
+  }
+
+  .media-cover-card__meta {
+    @apply grid gap-1 px-4 py-3 text-sm text-[var(--color-soft-ink)];
+  }
+
+  .media-cover-card__meta strong {
+    @apply text-[var(--color-ink)];
+  }
+
+  .media-cover-card__empty {
+    @apply px-4 py-6 text-sm leading-6 text-[var(--color-soft-ink)];
+  }
+
+  .media-sheet-card {
+    @apply grid gap-3 rounded-[20px] border border-black/8 bg-white/82 p-3 text-left shadow-sm transition hover:border-black/15 hover:bg-white;
+  }
+
+  .media-sheet-card__image {
+    @apply h-36 w-full rounded-[16px] object-cover;
+  }
+
+  .media-sheet-card__body {
+    @apply grid gap-1 text-sm text-[var(--color-soft-ink)];
+  }
+
+  .media-sheet-card__body strong {
+    @apply text-[var(--color-ink)];
+  }
 }

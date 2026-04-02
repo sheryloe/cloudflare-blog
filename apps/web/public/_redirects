@@ -1,1 +1,14 @@
-/*    /index.html   200
+/post/* /ko/post/:splat 301
+/category/* /ko/category/:splat 301
+/tag/* /ko/tag/:splat 301
+/about /ko/about 301
+/search /ko/search 301
+
+/rss.xml https://api.example.com/rss.xml 302
+/feed.xml https://api.example.com/feed.xml 302
+/sitemap.xml https://api.example.com/sitemap.xml 302
+/ko/rss.xml https://api.example.com/rss.xml 302
+/ko/feed.xml https://api.example.com/feed.xml 302
+/ko/sitemap.xml https://api.example.com/sitemap.xml 302
+
+/* /index.html 200

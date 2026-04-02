@@ -1,0 +1,259 @@
+:root {
+  --bg: #f5f1e8;
+  --panel: rgba(255, 255, 255, 0.86);
+  --ink: #1a2230;
+  --muted: #697384;
+  --line: rgba(26, 34, 48, 0.12);
+  --accent: #c55d25;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(197, 93, 37, 0.18), transparent 24%),
+    radial-gradient(circle at top right, rgba(36, 84, 126, 0.14), transparent 22%),
+    var(--bg);
+  color: var(--ink);
+  font-family: "Pretendard Variable", "Pretendard", system-ui, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.editor-app {
+  width: min(1400px, 100%);
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.editor-app__header,
+.editor-shell,
+.preview-shell,
+.status-toast {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+  border-radius: 28px;
+}
+
+.editor-app__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+}
+
+.editor-app__header h1 {
+  margin: 8px 0 10px;
+  font-family: "Newsreader Variable", serif;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+}
+
+.editor-app__header p {
+  margin: 0;
+  max-width: 64ch;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.editor-app__actions,
+.side-card__actions,
+.preview-tabs,
+.editor-panel__tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.editor-app button,
+.editor-panel__tabs button,
+.preview-tabs button {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.76);
+  border-radius: 999px;
+  padding: 10px 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  padding: 24px;
+  margin-top: 22px;
+}
+
+.editor-shell__left {
+  display: grid;
+  gap: 16px;
+}
+
+.editor-shell__left label,
+.inspector-card label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.editor-shell__left input,
+.editor-shell__left textarea,
+.editor-shell__left select,
+.inspector-card input,
+.inspector-card select {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 18px;
+  padding: 12px 14px;
+}
+
+.editor-panel {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.editor-panel__toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.editor-panel__content {
+  min-height: 520px;
+  padding: 20px;
+}
+
+.editor-panel__content .ProseMirror {
+  min-height: 480px;
+  outline: none;
+  line-height: 1.8;
+}
+
+.editor-panel__html {
+  min-height: 520px;
+  width: 100%;
+  border: 0;
+  padding: 20px;
+  background: transparent;
+  resize: vertical;
+  line-height: 1.7;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.editor-image {
+  border-radius: 24px;
+  margin: 20px auto;
+}
+
+.editor-shell__right {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.side-card,
+.inspector-card {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.side-card__actions--stack {
+  display: grid;
+}
+
+.status-badge {
+  display: inline-flex;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(197, 93, 37, 0.12);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.warning-list,
+.asset-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.asset-list__item {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.asset-list__item img {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+.asset-list__item span,
+.warning-list p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.preview-shell {
+  margin-top: 22px;
+  padding: 18px;
+}
+
+.preview-panel {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.76);
+  min-height: 260px;
+}
+
+.preview-panel pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.status-toast {
+  margin-top: 16px;
+  padding: 14px 18px;
+}
+
+@media (max-width: 1080px) {
+  .editor-app__header,
+  .editor-shell {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+}

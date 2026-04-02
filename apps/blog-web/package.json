@@ -1,0 +1,24 @@
+{
+  "name": "@cloudflare-blog/blog-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --host 0.0.0.0 --port 4321",
+    "build": "astro build",
+    "preview": "astro preview --host 0.0.0.0 --port 4321",
+    "deploy": "wrangler deploy",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.4",
+    "@cloudflare-blog/content-schema": "workspace:*",
+    "@cloudflare-blog/seo-utils": "workspace:*",
+    "astro": "^5.14.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.8.2",
+    "wrangler": "^4.6.0"
+  }
+}

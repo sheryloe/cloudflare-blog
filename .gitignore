@@ -4,6 +4,11 @@ dist/
 .turbo/
 .env
 .dev.vars
+.env.local
 coverage/
 .DS_Store
 Thumbs.db
+apps/editor-local/.local-data/
+apps/editor-local/.env.local
+apps/blog-web/.astro/
+logs/
